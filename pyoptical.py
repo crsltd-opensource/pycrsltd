@@ -24,10 +24,7 @@ def TimeoutException(Exception):
         return "OptiCal timeout while trying to: " self.message
 
 class OptiCal(object):
-    """ object to access the OptiCal
-
-
-    """
+    """ object to access the OptiCal """
     def __init__(self, com_port,debug=True, timeout=10):
         self.phot = serial.Serial(com_port, timeout=timeout)
         self._calibrate()
@@ -45,9 +42,13 @@ class OptiCal(object):
     def _send_command(self, command, description):
         self.phot.write(command)
         ret = self.phot.read()
-        if ret == "":
+        self._check_return(ret)
+
+    def _check_return(self, ret, description)
+        """ check the return value of a read """
+         if ret == "":
             raise TimeoutException(description)
-        if ret == NACK:
+         if NACK in ret:
             raise NACKException(description)
 
     def _read_ref_defs(self):
@@ -70,7 +71,10 @@ class OptiCal(object):
             note: the ACK byte is removed for you
         """
         self.phot.write(chr(128+address))
-        return self.phot.read(2)[0]
+        ret = self.phot.read(2)
+        self._check_return(ret)
+        # if _check_return does not raise an excpetion
+        return ret[0]
 
     def _read_eeprom(self, start, stop):
         """ read contents of eeprom between start and stop inclusive

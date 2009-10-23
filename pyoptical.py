@@ -11,18 +11,18 @@ def to_int(list_of_bytes):
     list_of_bytes.reverse()
     return int("".join(list_of_bytes).encode('hex'),16)
 
-def OptiCalException(Exception):
-    pass
+class OptiCalException(Exception):
+    """ base exception for all OptiCal exceptions """
 
-def NACKException(Exception):
+class NACKException(OptiCalException):
     """ is raised when the OptiCal sends a NACK byte """
-    def __str__(self)
-        return "OptiCal sent a NACK while trying to: " self.message
+    def __str__(self):
+        return "OptiCal sent a NACK while trying to: %s" % self.message
 
-def TimeoutException(Exception):
+class TimeoutException(OptiCalException):
     """ is raised when the OptiCal does not respond within the timeout limit """
-    def __str__(self)
-        return "OptiCal timeout while trying to: " self.message
+    def __str__(self):
+        return "OptiCal timeout while trying to: %s" % self.message
 
 class OptiCal(object):
     """ object to access the OptiCal """

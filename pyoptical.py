@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#coding=utf-8
 
 import serial
 
@@ -6,17 +8,18 @@ NACK='\x15'
 
 class OptiCal(object):
     def __init__(self, com_port,debug=True, timeout=10):
-        self.ser = serial.Serial(com_port, timeout=timeout)
+        self.phot = serial.Serial(com_port, timeout=timeout)
 
     def _calibrate(self):
-        self.ser.write('C')
-        ret = self.ser.read()
+        self.phot.write('C')
+        ret = self.phot.read()
         if ret == "":
             print "should raise excpetion since reading timed out"
         if ret == NACK:
             print "should raise excpetion due to NACK"
 
     def _read_eeprom(self, address):
-        self.ser.write(chr(128+address))
-        return self.ser.read(2)[0]
+        self.phot.write(chr(128+address))
+        return self.phot.read(2)[0]
+
 

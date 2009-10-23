@@ -7,6 +7,7 @@ ACK='\x06'
 NACK='\x15'
 
 def to_int(list_of_bytes):
+    """ convert a list of bytes(in least significant byte order) to int """
     list_of_bytes.reverse()
     return int("".join(list_of_bytes).encode('hex'),16)
 

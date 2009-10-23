@@ -121,13 +121,13 @@ class OptiCal(object):
 
     def _read_adc(self):
         """ read and correct the ADC value """
-        self.phot.write('R')
+        self.phot.write('L')
         ret = self.phot.read(4)
         self._check_return(ret, "reading adc value")
         # truncate the NACK
         ret = ret[:-1]
         # obtain an integer value from the bytes
-        adc = to_int(ret)
+        adc = to_int([ret[0], ret[1], ret[2]])
         return adc - self.Z_count - 524288
 
     def get_luminance(self):
@@ -144,10 +144,10 @@ class OptiCal(object):
 
     def _get_measurement(self):
         ADC_adjust = self._read_adc()
-        numerator =  ((float(ADC_adjust)/524288) * (self.V_ref * 10**-6) * self.R_gain)
-        if mode is 'voltage':
+        numerator =  ((float(ADC_adjust)/524288) * (self.V_ref * 10E-6) * self.R_gain)
+        if self.mode is 'current':
             numerator *= self.K_cal
-        return mea * self.R_feed
+        return numerator / self.R_feed
 
     def _read_product_type(self):
         return self._read_eeprom(0,1)

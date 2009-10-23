@@ -10,19 +10,45 @@ def to_int(list_of_bytes):
     list_of_bytes.reverse()
     return int("".join(list_of_bytes).encode('hex'),16)
 
+def OptiCalException(Exception):
+    pass
+
+def NACKException(Exception):
+    """ is raised when the OptiCal sends a NACK byte """
+    def __str__(self)
+        return "OptiCal sent a NACK while trying to: " self.message
+
+def TimeoutException(Exception):
+    """ is raised when the OptiCal does not respond within the timeout limit """
+    def __str__(self)
+        return "OptiCal timeout while trying to: " self.message
+
 class OptiCal(object):
+    """ object to access the OptiCal
+
+
+    """
     def __init__(self, com_port,debug=True, timeout=10):
         self.phot = serial.Serial(com_port, timeout=timeout)
         self._calibrate()
         self._read_ref_defs()
 
     def _calibrate(self):
-        self.phot.write('C')
+        self._send_command('C', "calibrate")
+
+    def _set_current_mode(self):
+        self._send_command('I', "set current mode")
+
+    def _set_voltage_mode(self):
+        self._send_command('V', "set voltage mode")
+
+    def _send_command(self, command, description):
+        self.phot.write(command)
         ret = self.phot.read()
         if ret == "":
-            print "should raise excpetion since reading timed out"
+            raise TimeoutException(description)
         if ret == NACK:
-            print "should raise excpetion due to NACK"
+            raise NACKException(description)
 
     def _read_ref_defs(self):
         """ read all parameters with a ref definition """

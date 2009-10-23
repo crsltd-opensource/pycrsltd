@@ -38,6 +38,8 @@ class OptiCal(object):
                 mode:       mode of the OptiCal, either 'current' or 'voltage'
                 timeout:    time in seconds to wait for a response
 
+            instance variables:
+
             For more information consult the docstring of the pyoptical module,
             and the OptiCal Users Guide Version 4, available from the CRS
             website.
@@ -58,9 +60,11 @@ class OptiCal(object):
         self._send_command('C', "calibrate")
 
     def _set_current_mode(self):
+        self.mode = 'current'
         self._send_command('I', "set current mode")
 
     def _set_voltage_mode(self):
+        self.mode = 'voltage'
         self._send_command('V', "set voltage mode")
 
     def _send_command(self, command, description):
@@ -114,6 +118,36 @@ class OptiCal(object):
         for i in range(start, stop+1):
             ret.append(self._read_eeprom_single(i))
         return ret
+
+    def _read_adc(self):
+        """ read and correct the ADC value """
+        self.phot.write('R')
+        ret = self.phot.read(4)
+        self._check_return(ret, "reading adc value")
+        # truncate the NACK
+        ret = ret[:-1]
+        # obtain an integer value from the bytes
+        adc = to_int(ret)
+        return adc - self.Z_count - 524288
+
+    def get_luminance(self):
+        """ the luminance measured in cd/m**2 """
+        if self.mode is not 'current':
+            raise OptiCalException("get_luminance() is only available in 'current' mode")
+        return self._get_measurement()
+
+    def get_voltage(self):
+        """ the measured voltage in V """
+        if self.mode is not 'voltage':
+            raise OptiCalException("get_voltage() is only available in 'voltage' mode")
+        return self._get_measurement()
+
+    def _get_measurement(self):
+        ADC_adjust = self._read_adc()
+        numerator =  ((float(ADC_adjust)/524288) * (self.V_ref * 10**-6) * self.R_gain)
+        if mode is 'voltage':
+            numerator *= self.K_cal
+        return mea * self.R_feed
 
     def _read_product_type(self):
         return self._read_eeprom(0,1)

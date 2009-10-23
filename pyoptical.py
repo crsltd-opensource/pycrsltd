@@ -50,14 +50,14 @@ class OptiCal(object):
     def _send_command(self, command, description):
         self.phot.write(command)
         ret = self.phot.read()
-        self._check_return(ret)
+        self._check_return(ret, description)
 
-    def _check_return(self, ret, description)
+    def _check_return(self, ret, description):
         """ check the return value of a read """
-         if ret == "":
-            raise TimeoutException(description)
-         if NACK in ret:
-            raise NACKException(description)
+        if ret == "":
+           raise TimeoutException(description)
+        if NACK in ret:
+           raise NACKException(description)
 
     def _read_ref_defs(self):
         """ read all parameters with a ref definition """
@@ -80,7 +80,7 @@ class OptiCal(object):
         """
         self.phot.write(chr(128+address))
         ret = self.phot.read(2)
-        self._check_return(ret)
+        self._check_return(ret, "reading eeprom at address %d" % address)
         # if _check_return does not raise an excpetion
         return ret[0]
 
@@ -111,7 +111,7 @@ class OptiCal(object):
     def _read_probe_serial_number(self):
         return self._read_eeprom(80,95)
 
-    def _read_ref_voltage(self)
+    def _read_ref_voltage(self):
         return self._read_eeprom(16,19)
 
     def _read_zero_error(self):

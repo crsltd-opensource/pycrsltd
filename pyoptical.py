@@ -27,6 +27,22 @@ class TimeoutException(OptiCalException):
 class OptiCal(object):
     """ object to access the OptiCal """
     def __init__(self, com_port, mode='current', debug=True, timeout=5):
+        """ initialise OptiCal
+
+            The constructor will obtain a reference to the device, do the
+            initial calibration, read all ref parameters, and put the device
+            into the requested mode.
+
+            arguments:
+                com_port:   name of the com_port
+                mode:       mode of the OptiCal, either 'current' or 'voltage'
+                timeout:    time in seconds to wait for a response
+
+            For more information consult the docstring of the pyoptical module,
+            and the OptiCal Users Guide Version 4, available from the CRS
+            website.
+
+        """
         self.phot = serial.Serial(com_port, timeout=timeout)
         self._calibrate()
         self._read_ref_defs()

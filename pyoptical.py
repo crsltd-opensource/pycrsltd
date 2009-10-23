@@ -6,9 +6,15 @@ import serial
 ACK='\x06'
 NACK='\x15'
 
+def to_int(list_of_bytes):
+    list_of_bytes.reverse()
+    return int("".join(list_of_bytes).encode('hex'),16)
+
 class OptiCal(object):
     def __init__(self, com_port,debug=True, timeout=10):
         self.phot = serial.Serial(com_port, timeout=timeout)
+        self._calibrate()
+        self._read_ref_defs()
 
     def _calibrate(self):
         self.phot.write('C')
@@ -17,6 +23,14 @@ class OptiCal(object):
             print "should raise excpetion since reading timed out"
         if ret == NACK:
             print "should raise excpetion due to NACK"
+
+    def _read_ref_defs(self):
+        """ read all parameters with a ref definition """
+        self.V_ref = to_int(self._read_eeprom(16,19))
+        self.Z_count = to_int(self._read_eeprom(32,35))
+        self.R_feed = to_int(self._read_eeprom(48,51))
+        self.R_gain = to_int(self._read_eeprom(64,67))
+        self.K_cal = to_int(self._read_eeprom(96,99))
 
     def _read_eeprom_single(self, address):
         """ read contents of eeprom at single address
@@ -56,7 +70,10 @@ class OptiCal(object):
     def _read_firmware_version(self):
         return self._read_eeprom(6,7)
 
-    def _read_ref_voltage(self):
+    def _read_probe_serial_number(self):
+        return self._read_eeprom(80,95)
+
+    def _read_ref_voltage(self)
         return self._read_eeprom(16,19)
 
     def _read_zero_error(self):
@@ -67,9 +84,6 @@ class OptiCal(object):
 
     def _read_voltage_gain_resistor(self):
         return self._read_eeprom(64,67)
-
-    def _read_probe_serial_number(self):
-        return self._read_eeprom(80,95)
 
     def _read_probe_calibration(self):
         return self._read_eeprom(96,99)

@@ -26,10 +26,17 @@ class TimeoutException(OptiCalException):
 
 class OptiCal(object):
     """ object to access the OptiCal """
-    def __init__(self, com_port,debug=True, timeout=10):
+    def __init__(self, com_port, mode='current', debug=True, timeout=5):
         self.phot = serial.Serial(com_port, timeout=timeout)
         self._calibrate()
         self._read_ref_defs()
+        if mode is 'current':
+            self._set_current_mode()
+        elif mode is 'voltage':
+            self._set_voltage_mode()
+        else:
+            raise OptiCalException("Mode: '"+mode+"' is not supported by "\
+                    +"OptiCal, either use 'current'(default) or 'voltage'")
 
     def _calibrate(self):
         self._send_command('C', "calibrate")

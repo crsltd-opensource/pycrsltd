@@ -144,7 +144,7 @@ class OptiCal(object):
 
     def _get_measurement(self):
         ADC_adjust = self._read_adc()
-        numerator =  ((float(ADC_adjust)/524288) * (self.V_ref * 10E-6) * self.R_gain)
+        numerator =  ((float(ADC_adjust)/524288) * (self.V_ref * 10**-6) * self.R_gain)
         if self.mode is 'current':
             numerator *= self.K_cal
         return numerator / self.R_feed

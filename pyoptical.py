@@ -1,6 +1,20 @@
 #!/usr/bin/env python
 #coding=utf-8
 
+"""
+
+pyoptical - a pure python interface to the CRS  OptiCal photometer.
+
+@author valentin.haenel@gmx.de
+
+Example:
+
+import pyoptical
+op = pyoptical.OptiCal('dev/dev/ttyUSB0')
+op.read_luminance()
+
+"""
+
 import serial
 
 ACK='\x06'

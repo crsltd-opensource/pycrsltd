@@ -128,6 +128,8 @@ class OptiCal(object):
         ret = ret[:-1]
         # obtain an integer value from the bytes
         adc = to_int([ret[0], ret[1], ret[2]])
+        print "adc_mine", adc
+        print ord(ret[0])+(ord(ret[1])<<8)+(ord(ret[2])<<16)
         return adc - self.Z_count - 524288
 
     def get_luminance(self):
@@ -144,10 +146,10 @@ class OptiCal(object):
 
     def _get_measurement(self):
         ADC_adjust = self._read_adc()
-        numerator =  ((float(ADC_adjust)/524288) * (self.V_ref * 10**-6) * self.R_gain)
+        numerator =  (float((ADC_adjust)/524288.0) * self.V_ref * 1.e-6)
         if self.mode is 'current':
-            numerator *= self.K_cal
-        return numerator / self.R_feed
+            denominator = self.R_feed * self.K_cal * 1.e-15
+        return numerator / denominator
 
     def _read_product_type(self):
         return self._read_eeprom(0,1)

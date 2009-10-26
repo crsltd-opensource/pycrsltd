@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 #coding=utf-8
 
-"""
+""" pyoptical - a pure python interface to the CRS  'OptiCal' photometer
 
-pyoptical - a pure python interface to the CRS  OptiCal photometer.
+    @author:  Valentin Haenel <valentin.haenel@gmx.de>
+    @version: 0.1
 
-@author valentin.haenel@gmx.de
+    See OptiCal for details.
 
-Example:
-
-import pyoptical
-op = pyoptical.OptiCal('dev/dev/ttyUSB0')
-op.read_luminance()
+    The interface is implemented according to the protocol specification in the
+    OptiCal-User-Guide Version 4, 1995 including the following ammendments:
+        a) To read out the ADC value, an 'L' must be sent instead of an 'R'
+        b) The equations to convert from ADC to meaningful units had chanhed. See
+        read_luminance() and read_voltage for details.
 
 """
 
@@ -39,7 +40,16 @@ class TimeoutException(OptiCalException):
         return "OptiCal timeout while trying to: %s" % self.message
 
 class OptiCal(object):
-    """ object to access the OptiCal """
+    """ object to access the OptiCal
+
+        Example:
+
+        import pyoptical
+        op = pyoptical.OptiCal('dev/dev/ttyUSB0')
+        op.read_luminance()
+
+    """
+
     def __init__(self, com_port, mode='current', debug=True, timeout=5):
         """ initialise OptiCal
 
@@ -71,17 +81,26 @@ class OptiCal(object):
                     +"OptiCal, either use 'current'(default) or 'voltage'")
 
     def _calibrate(self):
+        """ perform initial calibration
+
+            This must be done after powering up the device, before any readouts
+            are performed.
+
+        """
         self._send_command('C', "calibrate")
 
     def _set_current_mode(self):
+        """ put the device into 'current' mode, read_uminance() is available """
         self.mode = 'current'
         self._send_command('I', "set current mode")
 
     def _set_voltage_mode(self):
+        """ put the device into 'voltage' mode, read_voltage() is available """
         self.mode = 'voltage'
         self._send_command('V', "set voltage mode")
 
     def _send_command(self, command, description):
+        """ send a single command, that is responeded to with a ACK/NACK """
         self.phot.write(command)
         ret = self.phot.read()
         self._check_return(ret, description)
@@ -110,7 +129,7 @@ class OptiCal(object):
             returns:
                 a byte in the range 0<i<256 as str
 
-            note: the ACK byte is removed for you
+            note: the ACK byte is truncated
         """
         self.phot.write(chr(128+address))
         ret = self.phot.read(2)
@@ -134,11 +153,11 @@ class OptiCal(object):
         return ret
 
     def _read_adc(self):
-        """ read and correct the ADC value """
+        """ read and adjust the ADC value """
         self.phot.write('L')
         ret = self.phot.read(4)
         self._check_return(ret, "reading adc value")
-        # truncate the NACK
+        # truncate the ACK
         ret = ret[:-1]
         # obtain an integer value from the bytes
         adc = to_int([ret[0], ret[1], ret[2]])

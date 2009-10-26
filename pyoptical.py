@@ -146,24 +146,20 @@ class OptiCal(object):
         print ord(ret[0])+(ord(ret[1])<<8)+(ord(ret[2])<<16)
         return adc - self.Z_count - 524288
 
-    def get_luminance(self):
+    def read_luminance(self):
         """ the luminance measured in cd/m**2 """
         if self.mode is not 'current':
             raise OptiCalException("get_luminance() is only available in 'current' mode")
-        return self._get_measurement()
+        ADC_adjust = self._read_adc()
+        numerator =  (float((ADC_adjust)/524288.0) * self.V_ref * 1.e-6)
+        denominator = self.R_feed * self.K_cal * 1.e-15
+        return numerator / denominator
 
     def get_voltage(self):
         """ the measured voltage in V """
         if self.mode is not 'voltage':
             raise OptiCalException("get_voltage() is only available in 'voltage' mode")
         return self._get_measurement()
-
-    def _get_measurement(self):
-        ADC_adjust = self._read_adc()
-        numerator =  (float((ADC_adjust)/524288.0) * self.V_ref * 1.e-6)
-        if self.mode is 'current':
-            denominator = self.R_feed * self.K_cal * 1.e-15
-        return numerator / denominator
 
     def _read_product_type(self):
         return self._read_eeprom(0,1)

@@ -6,7 +6,7 @@
     @author:  Valentin Haenel <valentin.haenel@gmx.de>
     @version: 0.1
 
-    See OptiCal for details.
+    This module provides the 'OptiCal' class and some supporting code.
 
     The interface is implemented according to the protocol specification in the
     OptiCal-User-Guide Version 4, 1995 including the following ammendments:
@@ -48,6 +48,50 @@ class OptiCal(object):
         op = pyoptical.OptiCal('dev/dev/ttyUSB0')
         op.read_luminance()
 
+        Notes about the com_port:
+            The com_port argument for the constructor may vary depending on both
+            your operating system and how you connect to the OptiCal. This code was
+            developed using a usb-to-serial adapter that contains a PL2303 chipset
+            manufactured by Prolific:
+            http://www.prolific.com.tw/eng/Products.asp?ID=59. The following
+            sections outine how to access the OptiCal using pyoptical and a
+            usb-to-serial adapter containing the prolific chipset. We have not tried
+            this code using a raw serial port, but would be very interested to hear
+            from you if you do.
+
+            Linux (Ubuntu Hardy):
+                Support for the adapter is compiled into the kernel, and the device
+                is automatically recognised. You could check 'dmesg' for the
+                follwing output:
+
+                usb 2-1: new full speed USB device using uhci_hcd and address 4
+                usb 2-1: configuration #1 chosen from 1 choice
+                pl2303 2-1:1.0: pl2303 converter detected
+                usb 2-1: pl2303 converter now attached to ttyUSB0
+
+                In this case the com_port string is simply '/dev/ttyUSB0'
+
+            Mac OSX (10.5.8 Leopard)
+
+
+            Other Operating Systems and Adapters:
+
+                This code has two limitations, most importantly pyserial must support
+                your platform. Secondly, if you wish to use a usb-to-serial
+                adapter a driver for your target operating system must be
+                available from the manufacturer or possibly a third party (for
+                exampl and open source driver).
+
+
+        Notes about the two modes:
+            The OptiCal supports two readout modes 'current' and 'voltage',
+            where the 'current' mode is the default. In 'current' mode
+            'read_luminance()' will return the luminance measured by the OptiCal
+            in cd/m**2. In 'voltage', 'read_voltage()' will return the voltage
+            in V. Both functions will raise an OptiCal exception if you are in
+            the wrong mode.
+
+
     """
 
     def __init__(self, com_port, mode='current', debug=True, timeout=5):
@@ -62,11 +106,11 @@ class OptiCal(object):
                 mode:       mode of the OptiCal, either 'current' or 'voltage'
                 timeout:    time in seconds to wait for a response
 
+            For more information about the 'com_port' and 'mode' arguments see
+            the docstring of the class.
+
             instance variables:
 
-            For more information consult the docstring of the pyoptical module,
-            and the OptiCal Users Guide Version 4, available from the CRS
-            website.
 
         """
         self.phot = serial.Serial(com_port, timeout=timeout)

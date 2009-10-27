@@ -91,6 +91,14 @@ class OptiCal(object):
             in V. Both functions will raise an OptiCal exception if you are in
             the wrong mode.
 
+        Implementation details:
+            The constructor will first perform the initial calibration of the
+            device as required by the protocol specification. Next it will read
+            out the so called 'reference parameters' and store them. The
+            reference parameters are listed in the protocol specification and
+            are used to convert the raw ADC reading into meaningful units when
+            either one of the 'read_*()' methods is called. Lastly it will put
+            the device into the requested mode.
 
     """
 
@@ -98,8 +106,8 @@ class OptiCal(object):
         """ initialise OptiCal
 
             The constructor will obtain a reference to the device, do the
-            initial calibration, read all ref parameters, and put the device
-            into the requested mode.
+            initial calibration, read all reference parameters, and put the
+            device into the requested mode.
 
             arguments:
                 com_port:   name of the com_port

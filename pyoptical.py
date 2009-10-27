@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #coding=utf-8
 
-""" pyoptical - a pure python interface to the CRS  'OptiCal' photometer
+""" pyoptical - a pure python interface to the CRS 'OptiCal' photometer
 
     @author:  Valentin Haenel <valentin.haenel@gmx.de>
     @version: 0.1
@@ -11,8 +11,8 @@
     The interface is implemented according to the protocol specification in the
     OptiCal-User-Guide Version 4, 1995 including the following ammendments:
         a) To read out the ADC value, an 'L' must be sent instead of an 'R'
-        b) The equations to convert from ADC to meaningful units had chanhed. See
-        read_luminance() and read_voltage for details.
+        b) The equations to convert from ADC to meaningful units had changed. See
+        read_luminance() and read_voltage() for details.
 
 """
 
@@ -109,9 +109,6 @@ class OptiCal(object):
             For more information about the 'com_port' and 'mode' arguments see
             the docstring of the class.
 
-            instance variables:
-
-
         """
         self.phot = serial.Serial(com_port, timeout=timeout)
         self._calibrate()
@@ -127,8 +124,8 @@ class OptiCal(object):
     def _calibrate(self):
         """ perform initial calibration
 
-            This must be done after powering up the device, before any readouts
-            are performed.
+            As stated in the OptiCal user guide, this must be done after
+            powering up the device, before any readouts are performed.
 
         """
         self._send_command('C', "calibrate")
@@ -150,7 +147,7 @@ class OptiCal(object):
         self._check_return(ret, description)
 
     def _check_return(self, ret, description):
-        """ check the return value of a read """
+        """ check the return value of a read, raise exception if its not o.k. """
         if ret == "":
            raise TimeoutException(description)
         if NACK in ret:

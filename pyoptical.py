@@ -148,6 +148,7 @@ class OptiCal(object):
         self.phot = serial.Serial(com_port, timeout=timeout)
         self._calibrate()
         self._read_ref_defs()
+        self._read_other_defs()
         if mode is 'current':
             self._set_current_mode()
         elif mode is 'voltage':
@@ -156,12 +157,16 @@ class OptiCal(object):
             raise OptiCalException("Mode: '"+mode+"' is not supported by "\
                     +"OptiCal, either use 'current'(default) or 'voltage'")
     def __str__(self):
-        return "Optical at: " + self.phot.port + "\n" + \
-               "V_ref:   " + str(self._V_ref) + "\n" + \
-               "Z_count: " + str(self._Z_count) + "\n" + \
-               "R_feed:  " + str(self._R_feed) + "\n" + \
-               "R_gain:  " + str(self._R_gain) + "\n" + \
-               "K_cal:   " + str(self._K_cal) + "\n"
+        return "Optical found at : " + self.phot.port + "\n" + \
+               "Product Type :     " + self._product_type + "\n" \
+               "Optical S/N  :     " + str(self._optical_serial_number) + "\n" \
+               "Firmware version : " + self._firmware_version + "\n" \
+               "V_ref:             " + str(self._V_ref) + "\n" + \
+               "Z_count:           " + str(self._Z_count) + "\n" + \
+               "R_feed:            " + str(self._R_feed) + "\n" + \
+               "R_gain:            " + str(self._R_gain) + "\n" + \
+               "Probe S/N          " + str(self._probe_serial_number) + "\n" + \
+               "K_cal:             " + str(self._K_cal) + "\n"
 
 
     def _calibrate(self):
@@ -203,6 +208,13 @@ class OptiCal(object):
         self._R_feed = self._read_R_feed()
         self._R_gain = self._read_R_gain()
         self._K_cal = self._read_K_cal()
+
+    def _read_other_defs(self):
+        """ read all parameters that do not have a ref definition """
+        self._product_type = self._read_product_type()
+        self._optical_serial_number = self._read_optical_serial_number()
+        self._firmware_version = self._read_firmware_version()
+        self._probe_serial_number = self._read_probe_serial_number()
 
     def _read_eeprom_single(self, address):
         """ read contents of eeprom at single address
@@ -263,16 +275,16 @@ class OptiCal(object):
         return self._get_measurement()
 
     def _read_product_type(self):
-        return self._read_eeprom(0,1)
+        return str(self._read_eeprom(0,1))
 
     def _read_optical_serial_number(self):
-        return self._read_eeprom(2,5)
+        return to_int(self._read_eeprom(2,5))
 
     def _read_firmware_version(self):
-        return self._read_eeprom(6,7)
+        return str(self._read_eeprom(6,7))
 
     def _read_probe_serial_number(self):
-        return self._read_eeprom(80,95)
+        return int("".join(self._read_eeprom(80,95)))
 
     def _read_V_ref(self):
         """ reference voltage in microV """

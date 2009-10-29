@@ -155,6 +155,14 @@ class OptiCal(object):
         else:
             raise OptiCalException("Mode: '"+mode+"' is not supported by "\
                     +"OptiCal, either use 'current'(default) or 'voltage'")
+    def __str__(self):
+        return "Optical at: " + self.phot.port + "\n" + \
+               "V_ref:   " + str(self._V_ref) + "\n" + \
+               "Z_count: " + str(self._Z_count) + "\n" + \
+               "R_feed:  " + str(self._R_feed) + "\n" + \
+               "R_gain:  " + str(self._R_gain) + "\n" + \
+               "K_cal:   " + str(self._K_cal) + "\n"
+
 
     def _calibrate(self):
         """ perform initial calibration
@@ -190,11 +198,11 @@ class OptiCal(object):
 
     def _read_ref_defs(self):
         """ read all parameters with a ref definition """
-        self.V_ref = to_int(self._read_eeprom(16,19))
-        self.Z_count = to_int(self._read_eeprom(32,35))
-        self.R_feed = to_int(self._read_eeprom(48,51))
-        self.R_gain = to_int(self._read_eeprom(64,67))
-        self.K_cal = to_int(self._read_eeprom(96,99))
+        self._V_ref = self._read_V_ref()
+        self._Z_count = self._read_Z_count()
+        self._R_feed = self._read_R_feed()
+        self._R_gain = self._read_R_gain()
+        self._K_cal = self._read_K_cal()
 
     def _read_eeprom_single(self, address):
         """ read contents of eeprom at single address
@@ -266,17 +274,22 @@ class OptiCal(object):
     def _read_probe_serial_number(self):
         return self._read_eeprom(80,95)
 
-    def _read_ref_voltage(self):
-        return self._read_eeprom(16,19)
+    def _read_V_ref(self):
+        """ reference voltage in microV """
+        return to_int(self._read_eeprom(16,19))
 
-    def _read_zero_error(self):
-        return self._read_eeprom(32,35)
+    def _read_Z_count(self):
+        """ zero error in ADC counts """
+        return to_int(self._read_eeprom(32,35))
 
-    def _read_feedback_resistor(self):
-        return self._read_eeprom(48,51)
+    def _read_R_feed(self):
+        """ feedback resistor in Ohm """
+        return to_int(self._read_eeprom(48,51))
 
-    def _read_voltage_gain_resistor(self):
-        return self._read_eeprom(64,67)
+    def _read_R_gain(self):
+        """ voltage gain resistor in Ohm """
+        return to_int(self._read_eeprom(64,67))
 
-    def _read_probe_calibration(self):
-        return self._read_eeprom(96,99)
+    def _read_K_cal(self):
+        """ probe calibration in fA/cd/m**2 """
+        return to_int(self._read_eeprom(96,99))

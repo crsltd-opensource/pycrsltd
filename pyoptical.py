@@ -60,9 +60,9 @@ class OptiCal(object):
             from you if you do.
 
             Linux (Ubuntu Hardy):
-                Support for the adapter is compiled into the kernel, and the device
+                Support for the PL2303 chipset is compiled into the kernel, and the device
                 is automatically recognised. You could check 'dmesg' for the
-                follwing output:
+                following output:
 
                 usb 2-1: new full speed USB device using uhci_hcd and address 4
                 usb 2-1: configuration #1 chosen from 1 choice
@@ -72,7 +72,12 @@ class OptiCal(object):
                 In this case the com_port string is simply '/dev/ttyUSB0'
 
             Mac OSX (10.5.8 Leopard)
-
+                Support for the PL2303 chipset is provided by the following
+                open source driver:
+                http://osx-pl2303.sourceforge.net/
+                In this case the com_port string would be something along the
+                lines of '/dev/tty.PL2303-xxx', for example:
+                '/dev/tty.PL2303-000031FD'
 
             Other Operating Systems and Adapters:
 

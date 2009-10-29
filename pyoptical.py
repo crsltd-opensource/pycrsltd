@@ -30,7 +30,7 @@ class OptiCalException(Exception):
     """ base exception for all OptiCal exceptions """
 
 class NACKException(OptiCalException):
-    """ is raised when the OptiCal sends a NACK byte """
+    """ is raised when the OptiCal sends a NACK byte to signify an error"""
     def __str__(self):
         return "OptiCal sent a NACK while trying to: %s" % self.message
 
@@ -90,6 +90,28 @@ class OptiCal(object):
             in cd/m**2. In 'voltage', 'read_voltage()' will return the voltage
             in V. Both functions will raise an OptiCal exception if you are in
             the wrong mode.
+
+        Notes about possible exceptions:
+            There are three types of exceptions that can happen:
+                OptiCalException
+                NACKException
+                TimeoutException
+
+            The OptiCalException is the base class for all exceptions in this
+            module, and it is used as a general purpose exception to signify
+            errors on the part of the programmer, do not quietly except these
+
+            The NACKException is raised when the OptiCal responds with a NACK
+            byte. It does this either if the command was not understood or if
+            the command failed. If this happens during initialization, you may
+            have to re-initialise the device. If this happens during readout it
+            should be safe to try again instead of terminating the program.
+
+            The TimeoutException is raised when no answer is received within the
+            default timeout length. This might be caused by a number of issues,
+            but essentially means that somehow the communication with the
+            OptiCal might be interrupted, for example because it is no longer
+            connected to the computer.
 
         Implementation details:
             The constructor will first perform the initial calibration of the

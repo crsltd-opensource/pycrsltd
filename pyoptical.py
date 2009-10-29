@@ -237,8 +237,6 @@ class OptiCal(object):
         ret = ret[:-1]
         # obtain an integer value from the bytes
         adc = to_int([ret[0], ret[1], ret[2]])
-        print "adc_mine", adc
-        print ord(ret[0])+(ord(ret[1])<<8)+(ord(ret[2])<<16)
         return adc - self.Z_count - 524288
 
     def read_luminance(self):

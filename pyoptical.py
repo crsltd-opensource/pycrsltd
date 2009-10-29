@@ -257,15 +257,15 @@ class OptiCal(object):
         ret = ret[:-1]
         # obtain an integer value from the bytes
         adc = to_int([ret[0], ret[1], ret[2]])
-        return adc - self.Z_count - 524288
+        return adc - self._Z_count - 524288
 
     def read_luminance(self):
         """ the luminance measured in cd/m**2 """
         if self.mode is not 'current':
             raise OptiCalException("get_luminance() is only available in 'current' mode")
         ADC_adjust = self._read_adc()
-        numerator =  (float((ADC_adjust)/524288.0) * self.V_ref * 1.e-6)
-        denominator = self.R_feed * self.K_cal * 1.e-15
+        numerator =  (float((ADC_adjust)/524288.0) * self._V_ref * 1.e-6)
+        denominator = self._R_feed * self._K_cal * 1.e-15
         return numerator / denominator
 
     def get_voltage(self):

@@ -129,7 +129,7 @@ class OptiCal(object):
 
     """
 
-    def __init__(self, com_port, mode='current', debug=True, timeout=5):
+    def __init__(self, com_port, timeout=5):
         """ initialise OptiCal
 
             The constructor will obtain a reference to the device, do the
@@ -149,13 +149,8 @@ class OptiCal(object):
         self._calibrate()
         self._read_ref_defs()
         self._read_other_defs()
-        if mode is 'current':
-            self._set_current_mode()
-        elif mode is 'voltage':
-            self._set_voltage_mode()
-        else:
-            raise OptiCalException("Mode: '"+mode+"' is not supported by "\
-                    +"OptiCal, either use 'current'(default) or 'voltage'")
+        self._set_current_mode()
+
     def __str__(self):
         return "Optical found at : " + self.phot.port + "\n" + \
                "Product Type :     " + self._product_type + "\n" \
@@ -180,12 +175,12 @@ class OptiCal(object):
 
     def _set_current_mode(self):
         """ put the device into 'current' mode, read_uminance() is available """
-        self.mode = 'current'
+        self._mode = 'current'
         self._send_command('I', "set current mode")
 
     def _set_voltage_mode(self):
         """ put the device into 'voltage' mode, read_voltage() is available """
-        self.mode = 'voltage'
+        self._mode = 'voltage'
         self._send_command('V', "set voltage mode")
 
     def _send_command(self, command, description):
@@ -261,8 +256,8 @@ class OptiCal(object):
 
     def read_luminance(self):
         """ the luminance measured in cd/m**2 """
-        if self.mode is not 'current':
-            raise OptiCalException("get_luminance() is only available in 'current' mode")
+        if self._mode is not 'current':
+            self._set_current_mode()
         ADC_adjust = self._read_adc()
         numerator =  (float((ADC_adjust)/524288.0) * self._V_ref * 1.e-6)
         denominator = self._R_feed * self._K_cal * 1.e-15
@@ -270,8 +265,8 @@ class OptiCal(object):
 
     def get_voltage(self):
         """ the measured voltage in V """
-        if self.mode is not 'voltage':
-            raise OptiCalException("get_voltage() is only available in 'voltage' mode")
+        if self._mode is not 'voltage':
+            self._set_voltage_mode()
         return self._get_measurement()
 
     def _read_product_type(self):

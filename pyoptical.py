@@ -145,14 +145,14 @@ class OptiCal(object):
             the docstring of the class.
 
         """
-        self.phot = serial.Serial(com_port, timeout=timeout)
+        self._phot = serial.Serial(com_port, timeout=timeout)
         self._calibrate()
         self._read_ref_defs()
         self._read_other_defs()
         self._set_current_mode()
 
     def __str__(self):
-        return "Optical found at : " + self.phot.port + "\n" + \
+        return "Optical found at : " + self._phot.port + "\n" + \
                "Product Type :     " + self._product_type + "\n" \
                "Optical S/N  :     " + str(self._optical_serial_number) + "\n" \
                "Firmware version : " + self._firmware_version + "\n" \
@@ -185,8 +185,8 @@ class OptiCal(object):
 
     def _send_command(self, command, description):
         """ send a single command, that is responeded to with a ACK/NACK """
-        self.phot.write(command)
-        ret = self.phot.read()
+        self._phot.write(command)
+        ret = self._phot.read()
         self._check_return(ret, description)
 
     def _check_return(self, ret, description):
@@ -222,8 +222,8 @@ class OptiCal(object):
 
             note: the ACK byte is truncated
         """
-        self.phot.write(chr(128+address))
-        ret = self.phot.read(2)
+        self._phot.write(chr(128+address))
+        ret = self._phot.read(2)
         self._check_return(ret, "reading eeprom at address %d" % address)
         # if _check_return does not raise an excpetion
         return ret[0]
@@ -245,8 +245,8 @@ class OptiCal(object):
 
     def _read_adc(self):
         """ read and adjust the ADC value """
-        self.phot.write('L')
-        ret = self.phot.read(4)
+        self._phot.write('L')
+        ret = self._phot.read(4)
         self._check_return(ret, "reading adc value")
         # truncate the ACK
         ret = ret[:-1]

@@ -261,7 +261,7 @@ class OptiCal(object):
         ADC_adjust = self._read_adc()
         numerator =  (float((ADC_adjust)/524288.0) * self._V_ref * 1.e-6)
         denominator = self._R_feed * self._K_cal * 1.e-15
-        return numerator / denominator
+        return max(0.0,numerator / denominator)
 
     def get_voltage(self):
         """ the measured voltage in V """

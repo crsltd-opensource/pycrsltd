@@ -107,8 +107,8 @@ class OptiCal(object):
 
     """
 
-    ACK = '\x06'
-    NACK = '\x15'
+    _ACK = '\x06'
+    _NACK = '\x15'
 
     def __init__(self, com_port, timeout=5):
         """ initialise OptiCal
@@ -273,7 +273,7 @@ def _check_return( ret, description):
     """ check the return value of a read, raise exception if its not o.k. """
     if ret == "":
         raise TimeoutException(description)
-    if OptiCal.NACK in ret:
+    if OptiCal._NACK in ret:
         raise NACKException(description)
 
 class OptiCalException(Exception):

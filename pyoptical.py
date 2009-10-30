@@ -8,12 +8,6 @@
 
     This module provides the 'OptiCal' class and some supporting code.
 
-    The interface is implemented according to the protocol specification in the
-    OptiCal-User-Guide Version 4, 1995 including the following ammendments:
-        a) To read out the ADC value, an 'L' must be sent instead of an 'R'
-        b) The equations to convert from ADC to meaningful units had changed. See
-        read_luminance() and read_voltage() for details.
-
 """
 
 import serial
@@ -46,7 +40,11 @@ class OptiCal(object):
 
         import pyoptical
         op = pyoptical.OptiCal('dev/dev/ttyUSB0')
-        op.read_luminance()
+        try:
+            op.read_luminance()
+            op.read_voltage()
+        except pyoptical.NACKException as e:
+            print e
 
         Notes about the com_port:
             The com_port argument for the constructor may vary depending on both
@@ -87,15 +85,6 @@ class OptiCal(object):
                 available from the manufacturer or possibly a third party (for
                 exampl and open source driver).
 
-
-        Notes about the two modes:
-            The OptiCal supports two readout modes 'current' and 'voltage',
-            where the 'current' mode is the default. In 'current' mode
-            'read_luminance()' will return the luminance measured by the OptiCal
-            in cd/m**2. In 'voltage', 'read_voltage()' will return the voltage
-            in V. Both functions will raise an OptiCal exception if you are in
-            the wrong mode.
-
         Notes about possible exceptions:
             There are three types of exceptions that can happen:
                 OptiCalException
@@ -104,7 +93,7 @@ class OptiCal(object):
 
             The OptiCalException is the base class for all exceptions in this
             module, and it is used as a general purpose exception to signify
-            errors on the part of the programmer, do not quietly except these
+            errors on the part of the programmer, do not quietly except these.
 
             The NACKException is raised when the OptiCal responds with a NACK
             byte. It does this either if the command was not understood or if
@@ -119,26 +108,34 @@ class OptiCal(object):
             connected to the computer.
 
         Implementation details:
+
+            The interface is implemented according to the protocol specification in the
+            OptiCal-User-Guide Version 4, 1995 including the following ammendments:
+                a) To read out the ADC value, an 'L' must be sent instead of an 'R'
+                b) The equations to convert from ADC to meaningful units had changed. See
+                read_luminance() and read_voltage() for details.
+
             The constructor will first perform the initial calibration of the
             device as required by the protocol specification. Next it will read
-            out the so called 'reference parameters' and store them. The
-            reference parameters are listed in the protocol specification and
-            are used to convert the raw ADC reading into meaningful units when
-            either one of the 'read_*()' methods is called. Lastly it will put
-            the device into the requested mode.
+            out the so called 'reference parameters' and store them as private
+            variables. (The reference parameters are listed in the protocol
+            specification and are used to convert the raw ADC reading into
+            meaningful units when either one of the 'read_*()' methods is
+            called.) Lastly it will put the device into the default mode.
+
+            The OptiCal supports two readout modes 'current' and 'voltage', and
+            the constructor uses 'current' mode by default. In 'current' mode we
+            can read luminance and in 'voltage' mode we can read voltage.
+            When using either of the 'read_luminance()' and 'read_voltage()'
+            methods, the OptiCal is put into the correct mode in case it is not. 
 
     """
 
     def __init__(self, com_port, timeout=5):
         """ initialise OptiCal
 
-            The constructor will obtain a reference to the device, do the
-            initial calibration, read all reference parameters, and put the
-            device into the requested mode.
-
             arguments:
                 com_port:   name of the com_port
-                mode:       mode of the OptiCal, either 'current' or 'voltage'
                 timeout:    time in seconds to wait for a response
 
             For more information about the 'com_port' and 'mode' arguments see
@@ -174,17 +171,17 @@ class OptiCal(object):
         self._send_command('C', "calibrate")
 
     def _set_current_mode(self):
-        """ put the device into 'current' mode, read_uminance() is available """
+        """ put the device into 'current' mode """
         self._mode = 'current'
         self._send_command('I', "set current mode")
 
     def _set_voltage_mode(self):
-        """ put the device into 'voltage' mode, read_voltage() is available """
+        """ put the device into 'voltage' mode """
         self._mode = 'voltage'
         self._send_command('V', "set voltage mode")
 
     def _send_command(self, command, description):
-        """ send a single command, that is responeded to with a ACK/NACK """
+        """ send a single command charecter and read a single response (ACK/NACK)"""
         self._phot.write(command)
         ret = self._phot.read()
         self._check_return(ret, description)

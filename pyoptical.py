@@ -116,11 +116,8 @@ class OptiCal(object):
 
             The constructor will first perform the initial calibration of the
             device as required by the protocol specification. Next it will read
-            out the so called 'reference parameters' and store them as private
-            variables. (The reference parameters are listed in the protocol
-            specification and are used to convert the raw ADC reading into
-            meaningful units when either one of the 'read_*()' methods is
-            called.) Lastly it will put the device into the default mode.
+            out all parameters from the eeprom and store them as private
+            variables. And lastly it will put the device into the default mode.
 
             The OptiCal supports two readout modes 'current' and 'voltage', and
             the constructor uses 'current' mode by default. In 'current' mode we

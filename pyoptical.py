@@ -139,6 +139,12 @@ class OptiCal(object):
                "Probe S/N          " + str(self._probe_serial_number) + "\n" + \
                "K_cal:             " + str(self._K_cal) + "\n"
 
+    def _send_command(self, command, description):
+        """ send a single command charecter and read a single response (ACK/NACK)"""
+        self._phot.write(command)
+        ret = self._phot.read()
+        _check_return(ret, description)
+
     def _calibrate(self):
         """ perform initial calibration
 
@@ -157,27 +163,6 @@ class OptiCal(object):
         """ put the device into 'voltage' mode """
         self._mode = 'voltage'
         self._send_command('V', "set voltage mode")
-
-    def _send_command(self, command, description):
-        """ send a single command charecter and read a single response (ACK/NACK)"""
-        self._phot.write(command)
-        ret = self._phot.read()
-        _check_return(ret, description)
-
-    def _read_ref_defs(self):
-        """ read all parameters with a ref definition """
-        self._V_ref = self._read_V_ref()
-        self._Z_count = self._read_Z_count()
-        self._R_feed = self._read_R_feed()
-        self._R_gain = self._read_R_gain()
-        self._K_cal = self._read_K_cal()
-
-    def _read_other_defs(self):
-        """ read all parameters that do not have a ref definition """
-        self._product_type = self._read_product_type()
-        self._optical_serial_number = self._read_optical_serial_number()
-        self._firmware_version = self._read_firmware_version()
-        self._probe_serial_number = self._read_probe_serial_number()
 
     def _read_eeprom_single(self, address):
         """ read contents of eeprom at single address
@@ -208,6 +193,53 @@ class OptiCal(object):
         """
         return "".join([self._read_eeprom_single(i) for i in range(start, stop+1)])
 
+    def _read_product_type(self):
+        return _to_int(self._read_eeprom(0, 1))
+
+    def _read_optical_serial_number(self):
+        return _to_int(self._read_eeprom(2, 5))
+
+    def _read_firmware_version(self):
+        return float(_to_int(self._read_eeprom(6, 7)))/100
+
+    def _read_probe_serial_number(self):
+        return int(self._read_eeprom(80, 95))
+
+    def _read_other_defs(self):
+        """ read all parameters that do not have a ref definition """
+        self._product_type = self._read_product_type()
+        self._optical_serial_number = self._read_optical_serial_number()
+        self._firmware_version = self._read_firmware_version()
+        self._probe_serial_number = self._read_probe_serial_number()
+
+    def _read_V_ref(self):
+        """ reference voltage in microV """
+        return _to_int(self._read_eeprom(16, 19))
+
+    def _read_Z_count(self):
+        """ zero error in ADC counts """
+        return _to_int(self._read_eeprom(32, 35))
+
+    def _read_R_feed(self):
+        """ feedback resistor in Ohm """
+        return _to_int(self._read_eeprom(48, 51))
+
+    def _read_R_gain(self):
+        """ voltage gain resistor in Ohm """
+        return _to_int(self._read_eeprom(64, 67))
+
+    def _read_K_cal(self):
+        """ probe calibration in fA/cd/m**2 """
+        return _to_int(self._read_eeprom(96, 99))
+
+    def _read_ref_defs(self):
+        """ read all parameters with a ref definition """
+        self._V_ref = self._read_V_ref()
+        self._Z_count = self._read_Z_count()
+        self._R_feed = self._read_R_feed()
+        self._R_gain = self._read_R_gain()
+        self._K_cal = self._read_K_cal()
+
     def _read_adc(self):
         """ read and adjust the ADC value """
         self._phot.write('L')
@@ -233,38 +265,6 @@ class OptiCal(object):
         if self._mode is not 'voltage':
             self._set_voltage_mode()
 
-    def _read_product_type(self):
-        return _to_int(self._read_eeprom(0, 1))
-
-    def _read_optical_serial_number(self):
-        return _to_int(self._read_eeprom(2, 5))
-
-    def _read_firmware_version(self):
-        return float(_to_int(self._read_eeprom(6, 7)))/100
-
-    def _read_probe_serial_number(self):
-        return int(self._read_eeprom(80, 95))
-
-    def _read_V_ref(self):
-        """ reference voltage in microV """
-        return _to_int(self._read_eeprom(16, 19))
-
-    def _read_Z_count(self):
-        """ zero error in ADC counts """
-        return _to_int(self._read_eeprom(32, 35))
-
-    def _read_R_feed(self):
-        """ feedback resistor in Ohm """
-        return _to_int(self._read_eeprom(48, 51))
-
-    def _read_R_gain(self):
-        """ voltage gain resistor in Ohm """
-        return _to_int(self._read_eeprom(64, 67))
-
-    def _read_K_cal(self):
-        """ probe calibration in fA/cd/m**2 """
-        return _to_int(self._read_eeprom(96, 99))
-
 def _to_int(byte_string):
     """ convert a string of bytes(in least significant byte order) to int """
     return int(byte_string[::-1].encode('hex'), 16)
@@ -288,5 +288,4 @@ class TimeoutException(OptiCalException):
     """ is raised when the OptiCal does not respond within the timeout limit """
     def __str__(self):
         return "OptiCal timeout while trying to: %s" % self.message
-
 

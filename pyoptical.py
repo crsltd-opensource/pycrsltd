@@ -12,23 +12,6 @@
 
 import serial
 
-def to_int(byte_string):
-    """ convert a string of bytes(in least significant byte order) to int """
-    return int(byte_string[::-1].encode('hex'),16)
-
-class OptiCalException(Exception):
-    """ base exception for all OptiCal exceptions """
-
-class NACKException(OptiCalException):
-    """ is raised when the OptiCal sends a NACK byte to signify an error"""
-    def __str__(self):
-        return "OptiCal sent a NACK while trying to: %s" % self.message
-
-class TimeoutException(OptiCalException):
-    """ is raised when the OptiCal does not respond within the timeout limit """
-    def __str__(self):
-        return "OptiCal timeout while trying to: %s" % self.message
-
 class OptiCal(object):
     """ object to access the OptiCal
 
@@ -120,12 +103,12 @@ class OptiCal(object):
             the constructor uses 'current' mode by default. In 'current' mode we
             can read luminance and in 'voltage' mode we can read voltage.
             When using either of the 'read_luminance()' and 'read_voltage()'
-            methods, the OptiCal is put into the correct mode in case it is not. 
+            methods, the OptiCal is put into the correct mode in case it is not.
 
     """
 
-    ACK='\x06'
-    NACK='\x15'
+    ACK = '\x06'
+    NACK = '\x15'
 
     def __init__(self, com_port, timeout=5):
         """ initialise OptiCal
@@ -156,7 +139,6 @@ class OptiCal(object):
                "Probe S/N          " + str(self._probe_serial_number) + "\n" + \
                "K_cal:             " + str(self._K_cal) + "\n"
 
-
     def _calibrate(self):
         """ perform initial calibration
 
@@ -180,14 +162,7 @@ class OptiCal(object):
         """ send a single command charecter and read a single response (ACK/NACK)"""
         self._phot.write(command)
         ret = self._phot.read()
-        self._check_return(ret, description)
-
-    def _check_return(self, ret, description):
-        """ check the return value of a read, raise exception if its not o.k. """
-        if ret == "":
-           raise TimeoutException(description)
-        if NACK in ret:
-           raise NACKException(description)
+        _check_return(ret, description)
 
     def _read_ref_defs(self):
         """ read all parameters with a ref definition """
@@ -217,7 +192,7 @@ class OptiCal(object):
         """
         self._phot.write(chr(128+address))
         ret = self._phot.read(2)
-        self._check_return(ret, "reading eeprom at address %d" % address)
+        _check_return(ret, "reading eeprom at address %d" % address)
         # if _check_return does not raise an excpetion
         return ret[0]
 
@@ -237,11 +212,11 @@ class OptiCal(object):
         """ read and adjust the ADC value """
         self._phot.write('L')
         ret = self._phot.read(4)
-        self._check_return(ret, "reading adc value")
+        _check_return(ret, "reading adc value")
         # truncate the ACK
         ret = ret[:-1]
         # obtain an integer value from the bytes
-        adc = to_int(ret)
+        adc = _to_int(ret)
         return adc - self._Z_count - 524288
 
     def read_luminance(self):
@@ -251,42 +226,67 @@ class OptiCal(object):
         ADC_adjust = self._read_adc()
         numerator =  (float((ADC_adjust)/524288.0) * self._V_ref * 1.e-6)
         denominator = self._R_feed * self._K_cal * 1.e-15
-        return max(0.0,numerator / denominator)
+        return max(0.0, numerator / denominator)
 
     def get_voltage(self):
         """ the measured voltage in V """
         if self._mode is not 'voltage':
             self._set_voltage_mode()
-        return self._get_measurement()
 
     def _read_product_type(self):
-        return to_int(self._read_eeprom(0,1))
+        return _to_int(self._read_eeprom(0, 1))
 
     def _read_optical_serial_number(self):
-        return to_int(self._read_eeprom(2,5))
+        return _to_int(self._read_eeprom(2, 5))
 
     def _read_firmware_version(self):
-        return float(to_int(self._read_eeprom(6,7)))/100
+        return float(_to_int(self._read_eeprom(6, 7)))/100
 
     def _read_probe_serial_number(self):
-        return int(self._read_eeprom(80,95))
+        return int(self._read_eeprom(80, 95))
 
     def _read_V_ref(self):
         """ reference voltage in microV """
-        return to_int(self._read_eeprom(16,19))
+        return _to_int(self._read_eeprom(16, 19))
 
     def _read_Z_count(self):
         """ zero error in ADC counts """
-        return to_int(self._read_eeprom(32,35))
+        return _to_int(self._read_eeprom(32, 35))
 
     def _read_R_feed(self):
         """ feedback resistor in Ohm """
-        return to_int(self._read_eeprom(48,51))
+        return _to_int(self._read_eeprom(48, 51))
 
     def _read_R_gain(self):
         """ voltage gain resistor in Ohm """
-        return to_int(self._read_eeprom(64,67))
+        return _to_int(self._read_eeprom(64, 67))
 
     def _read_K_cal(self):
         """ probe calibration in fA/cd/m**2 """
-        return to_int(self._read_eeprom(96,99))
+        return _to_int(self._read_eeprom(96, 99))
+
+def _to_int(byte_string):
+    """ convert a string of bytes(in least significant byte order) to int """
+    return int(byte_string[::-1].encode('hex'), 16)
+
+def _check_return( ret, description):
+    """ check the return value of a read, raise exception if its not o.k. """
+    if ret == "":
+        raise TimeoutException(description)
+    if OptiCal.NACK in ret:
+        raise NACKException(description)
+
+class OptiCalException(Exception):
+    """ base exception for all OptiCal exceptions """
+
+class NACKException(OptiCalException):
+    """ is raised when the OptiCal sends a NACK byte to signify an error"""
+    def __str__(self):
+        return "OptiCal sent a NACK while trying to: %s" % self.message
+
+class TimeoutException(OptiCalException):
+    """ is raised when the OptiCal does not respond within the timeout limit """
+    def __str__(self):
+        return "OptiCal timeout while trying to: %s" % self.message
+
+

@@ -12,9 +12,6 @@
 
 import serial
 
-ACK='\x06'
-NACK='\x15'
-
 def to_int(byte_string):
     """ convert a string of bytes(in least significant byte order) to int """
     return int(byte_string[::-1].encode('hex'),16)
@@ -126,6 +123,9 @@ class OptiCal(object):
             methods, the OptiCal is put into the correct mode in case it is not. 
 
     """
+
+    ACK='\x06'
+    NACK='\x15'
 
     def __init__(self, com_port, timeout=5):
         """ initialise OptiCal

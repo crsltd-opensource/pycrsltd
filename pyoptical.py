@@ -15,10 +15,9 @@ import serial
 ACK='\x06'
 NACK='\x15'
 
-def to_int(list_of_bytes):
-    """ convert a list of bytes(in least significant byte order) to int """
-    list_of_bytes.reverse()
-    return int("".join(list_of_bytes).encode('hex'),16)
+def to_int(byte_string):
+    """ convert a string of bytes(in least significant byte order) to int """
+    return int(byte_string[::-1].encode('hex'),16)
 
 class OptiCalException(Exception):
     """ base exception for all OptiCal exceptions """
@@ -150,9 +149,9 @@ class OptiCal(object):
 
     def __str__(self):
         return "Optical found at : " + self._phot.port + "\n" + \
-               "Product Type :     " + self._product_type + "\n" \
+               "Product Type :     " + str(self._product_type) + "\n" \
                "Optical S/N  :     " + str(self._optical_serial_number) + "\n" \
-               "Firmware version : " + self._firmware_version + "\n" \
+               "Firmware version : " + str(self._firmware_version) + "\n" \
                "V_ref:             " + str(self._V_ref) + "\n" + \
                "Z_count:           " + str(self._Z_count) + "\n" + \
                "R_feed:            " + str(self._R_feed) + "\n" + \
@@ -233,12 +232,9 @@ class OptiCal(object):
                 stop: and integer in the range 0<i<100
 
             returns:
-                a list of bytes in the range 0<i<256 as str
+                a string of bytes, each in the range 0<i<255
         """
-        ret = []
-        for i in range(start, stop+1):
-            ret.append(self._read_eeprom_single(i))
-        return ret
+        return "".join([self._read_eeprom_single(i) for i in range(start, stop+1)])
 
     def _read_adc(self):
         """ read and adjust the ADC value """
@@ -248,7 +244,7 @@ class OptiCal(object):
         # truncate the ACK
         ret = ret[:-1]
         # obtain an integer value from the bytes
-        adc = to_int([ret[0], ret[1], ret[2]])
+        adc = to_int(ret)
         return adc - self._Z_count - 524288
 
     def read_luminance(self):
@@ -267,16 +263,16 @@ class OptiCal(object):
         return self._get_measurement()
 
     def _read_product_type(self):
-        return str(self._read_eeprom(0,1))
+        return to_int(self._read_eeprom(0,1))
 
     def _read_optical_serial_number(self):
         return to_int(self._read_eeprom(2,5))
 
     def _read_firmware_version(self):
-        return str(self._read_eeprom(6,7))
+        return float(to_int(self._read_eeprom(6,7)))/100
 
     def _read_probe_serial_number(self):
-        return int("".join(self._read_eeprom(80,95)))
+        return int(self._read_eeprom(80,95))
 
     def _read_V_ref(self):
         """ reference voltage in microV """

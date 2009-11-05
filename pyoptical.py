@@ -21,24 +21,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-""" pyoptical - a pure python interface to the CRS 'OptiCal' photometer
+""" pyoptical - a pure python interface to the CRS 'OptiCAL' photometer
 
     @author:  Valentin Haenel <valentin.haenel@gmx.de>
     @version: 0.1
 
-    This module provides the 'OptiCal' class and some supporting code.
+    This module provides the 'OptiCAL' class and some supporting code.
 
 """
 
 import serial
 
-class OptiCal(object):
-    """ object to access the OptiCal
+class OptiCAL(object):
+    """ object to access the OptiCAL
 
         Example:
 
         import pyoptical
-        op = pyoptical.OptiCal('dev/dev/ttyUSB0')
+        op = pyoptical.OptiCAL('dev/dev/ttyUSB0')
         try:
             op.read_luminance()
             op.read_voltage()
@@ -47,11 +47,11 @@ class OptiCal(object):
 
         Notes about the com_port:
             The com_port argument for the constructor may vary depending on both
-            your operating system and how you connect to the OptiCal. This code was
+            your operating system and how you connect to the OptiCAL. This code was
             developed using a usb-to-serial adapter that contains a PL2303 chipset
             manufactured by Prolific:
             http://www.prolific.com.tw/eng/Products.asp?ID=59. The following
-            sections outine how to access the OptiCal using pyoptical and a
+            sections outine how to access the OptiCAL using pyoptical and a
             usb-to-serial adapter containing the prolific chipset. We have not tried
             this code using a raw serial port, but would be very interested to hear
             from you if you do.
@@ -86,15 +86,15 @@ class OptiCal(object):
 
         Notes about possible exceptions:
             There are three types of exceptions that can happen:
-                OptiCalException
+                OptiCALException
                 NACKException
                 TimeoutException
 
-            The OptiCalException is the base class for all exceptions in this
+            The OptiCALException is the base class for all exceptions in this
             module, and it is used as a general purpose exception to signify
             errors on the part of the programmer, do not quietly except these.
 
-            The NACKException is raised when the OptiCal responds with a NACK
+            The NACKException is raised when the OptiCAL responds with a NACK
             byte. It does this either if the command was not understood or if
             the command failed. If this happens during initialization, you may
             have to re-initialise the device. If this happens during readout it
@@ -103,13 +103,13 @@ class OptiCal(object):
             The TimeoutException is raised when no answer is received within the
             default timeout length. This might be caused by a number of issues,
             but essentially means that somehow the communication with the
-            OptiCal might be interrupted, for example because it is no longer
+            OptiCAL might be interrupted, for example because it is no longer
             connected to the computer.
 
         Implementation details:
 
             The interface is implemented according to the protocol specification in the
-            OptiCal-User-Guide Version 4, 1995 including the following ammendments:
+            OptiCAL-User-Guide Version 4, 1995 including the following ammendments:
                 a) To read out the ADC value, an 'L' must be sent instead of an 'R'
                 b) The equations to convert from ADC to meaningful units had changed. See
                 read_luminance() and read_voltage() for details.
@@ -123,11 +123,11 @@ class OptiCal(object):
             out all parameters from the eeprom and store them as private
             variables. And lastly it will put the device into the default mode.
 
-            The OptiCal supports two readout modes 'current' and 'voltage', and
+            The OptiCAL supports two readout modes 'current' and 'voltage', and
             the constructor uses 'current' mode by default. In 'current' mode we
             can read luminance and in 'voltage' mode we can read voltage.
             When using either of the 'read_luminance()' and 'read_voltage()'
-            methods, the OptiCal is put into the correct mode in case it is not.
+            methods, the OptiCAL is put into the correct mode in case it is not.
 
     """
 
@@ -135,7 +135,7 @@ class OptiCal(object):
     _NACK = '\x15'
 
     def __init__(self, com_port, timeout=5):
-        """ initialise OptiCal
+        """ initialise OptiCAL
 
             arguments:
                 com_port:   name of the com_port
@@ -172,7 +172,7 @@ class OptiCal(object):
     def _calibrate(self):
         """ perform initial calibration
 
-            As stated in the OptiCal user guide, this must be done after
+            As stated in the OptiCAL user guide, this must be done after
             powering up the device, before any readouts are performed.
 
         """
@@ -299,19 +299,19 @@ def _check_return(ret, description):
     """ check the return value of a read, raise exception if its not o.k. """
     if ret == "":
         raise TimeoutException(description)
-    if OptiCal._NACK in ret:
+    if OptiCAL._NACK in ret:
         raise NACKException(description)
 
-class OptiCalException(Exception):
-    """ base exception for all OptiCal exceptions """
+class OptiCALException(Exception):
+    """ base exception for all OptiCAL exceptions """
 
-class NACKException(OptiCalException):
-    """ is raised when the OptiCal sends a NACK byte to signify an error"""
+class NACKException(OptiCALException):
+    """ is raised when the OptiCAL sends a NACK byte to signify an error"""
     def __str__(self):
-        return "OptiCal sent a NACK while trying to: %s" % self.message
+        return "OptiCAL sent a NACK while trying to: %s" % self.message
 
-class TimeoutException(OptiCalException):
-    """ is raised when the OptiCal does not respond within the timeout limit """
+class TimeoutException(OptiCALException):
+    """ is raised when the OptiCAL does not respond within the timeout limit """
     def __str__(self):
-        return "OptiCal timeout while trying to: %s" % self.message
+        return "OptiCAL timeout while trying to: %s" % self.message
 

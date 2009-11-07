@@ -51,7 +51,7 @@ class OptiCAL(object):
             developed using a usb-to-serial adapter that contains a PL2303 chipset
             manufactured by Prolific:
             http://www.prolific.com.tw/eng/Products.asp?ID=59. The following
-            sections outine how to access the OptiCAL using pyoptical and a
+            sections outline how to access the OptiCAL using pyoptical and a
             usb-to-serial adapter containing the prolific chipset. We have not tried
             this code using a raw serial port, but would be very interested to hear
             from you if you do.
@@ -70,8 +70,8 @@ class OptiCAL(object):
 
             Mac OSX (10.5.8 Leopard)
                 Support for the PL2303 chipset is provided by the following
-                open source driver:
-                http://osx-pl2303.sourceforge.net/
+                open source driver: http://osx-pl2303.sourceforge.net/
+
                 In this case the com_port string would be something along the
                 lines of '/dev/tty.PL2303-xxx', for example:
                 '/dev/tty.PL2303-000031FD'
@@ -89,7 +89,7 @@ class OptiCAL(object):
                 your platform. Secondly, if you wish to use a usb-to-serial
                 adapter a driver for your target operating system must be
                 available from the manufacturer or possibly a third party (for
-                exampl and open source driver).
+                example and open source driver).
 
         Notes about possible exceptions:
             There are three types of exceptions that can happen:
@@ -116,12 +116,12 @@ class OptiCAL(object):
         Implementation details:
 
             The interface is implemented according to the protocol specification in the
-            OptiCAL-User-Guide Version 4, 1995 including the following ammendments:
+            OptiCAL-User-Guide Version 4, 1995 including the following amendments:
                 a) To read out the ADC value, an 'L' must be sent instead of an 'R'
                 b) The equations to convert from ADC to meaningful units had changed. See
                 read_luminance() and read_voltage() for details.
 
-            The corrected versions of the conversion formulas can found in rge
+            The corrected versions of the conversion formulas can found in the
             OptiCAL.py python interface available from the CRS website, written
             by Walter F. Bischof in 2007.
 
@@ -171,7 +171,7 @@ class OptiCAL(object):
                "K_cal:             " + str(self._K_cal) + "\n"
 
     def _send_command(self, command, description):
-        """ send a single command charecter and read a single response (ACK/NACK)"""
+        """ send a single command character and read a single response (ACK/NACK)"""
         self._phot.write(command)
         ret = self._phot.read()
         _check_return(ret, description)

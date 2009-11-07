@@ -76,6 +76,13 @@ class OptiCAL(object):
                 lines of '/dev/tty.PL2303-xxx', for example:
                 '/dev/tty.PL2303-000031FD'
 
+            Windows (XP)
+                The manufacturer of your usb-to-serial adapter should provide
+                you with drivers.
+
+                In this case the com_port string would be something like:
+                'COM2', check the device manager for the number of the COM port.
+
             Other Operating Systems and Adapters:
 
                 This code has two limitations, most importantly pyserial must support

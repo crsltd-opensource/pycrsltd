@@ -284,10 +284,12 @@ class OptiCal(object):
         denominator = self._R_feed * self._K_cal * 1.e-15
         return max(0.0, numerator / denominator)
 
-    def get_voltage(self):
-        """ the measured voltage in V """
+    def read_voltage(self):
+        """ the voltage in V """
         if self._mode is not 'voltage':
             self._set_voltage_mode()
+        ADC_adjust = self._read_adc()
+        return ((float(ADC_adjust)/524288)*self._V_ref*1.e-6*self._R_gain)/self._R_feed
 
 def _to_int(byte_string):
     """ convert a string of bytes(in least significant byte order) to int """

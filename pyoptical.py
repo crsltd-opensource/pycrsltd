@@ -276,11 +276,11 @@ class OptiCal(object):
         return adc - self._Z_count - 524288
 
     def read_luminance(self):
-        """ the luminance measured in cd/m**2 """
+        """ the luminance in cd/m**2 """
         if self._mode is not 'current':
             self._set_current_mode()
         ADC_adjust = self._read_adc()
-        numerator =  (float((ADC_adjust)/524288.0) * self._V_ref * 1.e-6)
+        numerator =  (float(ADC_adjust)/524288) * self._V_ref * 1.e-6
         denominator = self._R_feed * self._K_cal * 1.e-15
         return max(0.0, numerator / denominator)
 
@@ -293,7 +293,7 @@ def _to_int(byte_string):
     """ convert a string of bytes(in least significant byte order) to int """
     return int(byte_string[::-1].encode('hex'), 16)
 
-def _check_return( ret, description):
+def _check_return(ret, description):
     """ check the return value of a read, raise exception if its not o.k. """
     if ret == "":
         raise TimeoutException(description)

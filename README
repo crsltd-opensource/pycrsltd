@@ -1,28 +1,34 @@
 README for pyoptical
-===================
+====================
  
 about
-------------
+-------------
 
 Pure python interface to CRS OptiCAL.
  
 dependencies
-------------
+-------------
 
 pyserial
 
+install
+-------------
+
+./setup.py install
+
+(may need root/admin privileges)
+
 documentation
-------------
+-------------
 
 Please see the docstring for the OptiCAL object.
  
 author
-------------
+-------------
  
 Valentin Haenel <valentin.haenel@gmx.de>
  
 copying
-------------
+-------------
  
-pyoptical is available under MIT-X liscence, see pyoptical.py for
-details.
+License: MIT-X, see pyoptical.py for details.

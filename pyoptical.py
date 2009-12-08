@@ -121,9 +121,13 @@ class OptiCAL(object):
                 b) The equations to convert from ADC to meaningful units had changed. See
                 read_luminance() and read_voltage() for details.
 
-            The corrected versions of the conversion formulas can found in the
-            OptiCAL.py python interface available from the CRS website, written
-            by Walter F. Bischof in 2007.
+            The full errata is available from the CSR website:
+
+            http://support.crsltd.com/FileManagement/Download/9f5f62bcb3e64eb8934fe72afb937cb6
+
+            The corrected versions of the conversion formulas can also be found
+            in the OptiCAL.py python interface available from the CRS website,
+            written by Walter F. Bischof in 2007.
 
             The constructor will first perform the initial calibration of the
             device as required by the protocol specification. Next it will read

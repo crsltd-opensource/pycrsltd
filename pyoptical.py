@@ -41,7 +41,6 @@ class OptiCAL(object):
         op = pyoptical.OptiCAL('dev/dev/ttyUSB0')
         try:
             op.read_luminance()
-            op.read_voltage()
         except pyoptical.NACKException as e:
             print e
 
@@ -134,11 +133,14 @@ class OptiCAL(object):
             out all parameters from the eeprom and store them as private
             variables. And lastly it will put the device into the default mode.
 
-            The OptiCAL supports two readout modes 'current' and 'voltage', and
-            the constructor uses 'current' mode by default. In 'current' mode we
-            can read luminance and in 'voltage' mode we can read voltage.
-            When using either of the 'read_luminance()' and 'read_voltage()'
-            methods, the OptiCAL is put into the correct mode in case it is not.
+            The initial version of the OptiCAL hardware supported two readout
+            modes 'current' and 'voltage'. The device could be used to read
+            luminace when in 'current' mode and 'voltage' when in voltage mode.
+            Over the years there have been two revisions of the OptiCAL
+            hardware, both no longer supported usage as a voltmeter, and thus
+            the 'voltage' mode has become redundant. Since version 0.2 this
+            interface no longer supports the 'voltage' mode, and the device will
+            be put into 'current' mode at startup.
 
     """
 
@@ -191,13 +193,7 @@ class OptiCAL(object):
 
     def _set_current_mode(self):
         """ put the device into 'current' mode """
-        self._mode = 'current'
         self._send_command('I', "set current mode")
-
-    def _set_voltage_mode(self):
-        """ put the device into 'voltage' mode """
-        self._mode = 'voltage'
-        self._send_command('V', "set voltage mode")
 
     def _read_eeprom_single(self, address):
         """ read contents of eeprom at single address
@@ -288,19 +284,10 @@ class OptiCAL(object):
 
     def read_luminance(self):
         """ the luminance in cd/m**2 """
-        if self._mode is not 'current':
-            self._set_current_mode()
         ADC_adjust = self._read_adc()
         numerator =  (float(ADC_adjust)/524288) * self._V_ref * 1.e-6
         denominator = self._R_feed * self._K_cal * 1.e-15
         return max(0.0, numerator / denominator)
-
-    def read_voltage(self):
-        """ the voltage in V """
-        if self._mode is not 'voltage':
-            self._set_voltage_mode()
-        ADC_adjust = self._read_adc()
-        return ((float(ADC_adjust)/524288)*self._V_ref*1.e-6*self._R_gain)/self._R_feed
 
 def _to_int(byte_string):
     """ convert a string of bytes(in least significant byte order) to int """

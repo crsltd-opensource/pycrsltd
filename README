@@ -6,6 +6,16 @@ about
 
 Pure python interface to CRS OptiCAL.
 
+long description
+--------------------
+
+The 'OptiCAL' is a photometer that is produced by Cambridge Research Systems
+(CRS). This device is a standard tool for gamma-calibration of display devices
+in vision research. This package provides a free-software replacement for the
+Windows-software distributed by the manufacturer that allows querying an OptiCAL
+via a serial connection. pyoptical can be used as a library in third-party
+applications or as a standalone command line tool.
+
 dependencies
 -------------
 

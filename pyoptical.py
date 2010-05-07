@@ -300,6 +300,13 @@ def _check_return(ret, description):
     if OptiCAL._NACK in ret:
         raise NACKException(description)
 
+def get_version():
+
+    start = __doc__.find("@version")+10
+    end = __doc__.find("\n\n", start)
+    version = __doc__[start: end]
+    return version
+
 class OptiCALException(Exception):
     """ base exception for all OptiCAL exceptions """
 
@@ -314,18 +321,15 @@ class TimeoutException(OptiCALException):
         return "OptiCAL timeout while trying to: %s" % self.message
 
 if __name__ == "__main__":
-
-    start = __doc__.find("@version")+10
-    end = __doc__.find("\n\n", start)
-    version = "%prog: " + __doc__[start: end]
-
     usage = "pyoptical [-i interval] [-n number ] [-r] com-port"
+    version = "%prog: " + get_version()
     error_prefix = "pyoptical.py: error:"
 
     from optparse import OptionParser
     import sys
     import time
     from itertools import repeat
+
     parser = OptionParser(usage="\n  " + usage, version=version)
 
     parser.add_option("-i", "--interval",

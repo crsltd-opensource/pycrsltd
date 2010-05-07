@@ -321,7 +321,7 @@ class TimeoutException(OptiCALException):
         return "OptiCAL timeout while trying to: %s" % self.message
 
 if __name__ == "__main__":
-    usage = "pyoptical [-i interval] [-n number ] [-r] com-port"
+    usage = "%prog [-i interval] [-n number ] [-r] com-port"
     version = "%prog: " + get_version()
     error_prefix = "pyoptical.py: error:"
 

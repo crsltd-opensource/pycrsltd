@@ -24,7 +24,7 @@
 """ pyoptical - a pure python interface to the CRS 'OptiCAL' photometer
 
     @author:  Valentin Haenel <valentin.haenel@gmx.de>
-    @version: 0.2
+    @version: 0.3-dev
 
     This module provides the 'OptiCAL' class and some supporting code.
 

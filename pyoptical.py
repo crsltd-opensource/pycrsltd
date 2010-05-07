@@ -154,7 +154,7 @@ class OptiCAL(object):
                 com_port:   name of the com_port
                 timeout:    time in seconds to wait for a response
 
-            For more information about the 'com_port' and 'mode' arguments see
+            For more information about the 'com_port' argument see
             the docstring of the class.
 
         """

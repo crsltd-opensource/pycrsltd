@@ -301,7 +301,7 @@ def _check_return(ret, description):
         raise NACKException(description)
 
 def get_version():
-
+    """ extract version from module docstring """
     start = __doc__.find("@version")+10
     end = __doc__.find("\n\n", start)
     version = __doc__[start: end]

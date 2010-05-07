@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
+import pyoptical
 
 setup(name='pyoptical',
-      version='0.1',
+      version=pyoptical.get_version(),
       description='Pure python interface to OptiCAL',
       author='Valentin Haenel',
       author_email='valentin.haenel@gmx.de',

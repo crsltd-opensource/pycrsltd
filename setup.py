@@ -9,5 +9,6 @@ setup(name='pyoptical',
       author='Valentin Haenel',
       author_email='valentin.haenel@gmx.de',
       py_modules=['pyoptical'],
+      scripts=['pyoptical']
      )
 

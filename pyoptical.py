@@ -46,14 +46,14 @@ class OptiCAL(object):
 
         Notes about the com_port:
             The com_port argument for the constructor may vary depending on both
-            your operating system and how you connect to the OptiCAL. This code was
-            developed using a usb-to-serial adapter that contains a PL2303 chipset
-            manufactured by Prolific:
+            your operating system and how you connect to the OptiCAL. This code
+            was developed using a usb-to-serial adapter that contains a PL2303
+            chipset manufactured by Prolific:
             http://www.prolific.com.tw/eng/Products.asp?ID=59. The following
             sections outline how to access the OptiCAL using pyoptical and a
-            usb-to-serial adapter containing the prolific chipset. We have not tried
-            this code using a raw serial port, but would be very interested to hear
-            from you if you do.
+            usb-to-serial adapter containing the prolific chipset. We have not
+            tried this code using a raw serial port, but would be very
+            interested to hear from you if you do.
 
             Linux (Ubuntu Hardy):
                 Support for the PL2303 chipset is compiled into the kernel, and the device
@@ -84,11 +84,11 @@ class OptiCAL(object):
 
             Other Operating Systems and Adapters:
 
-                This code has two limitations, most importantly pyserial must support
-                your platform. Secondly, if you wish to use a usb-to-serial
-                adapter a driver for your target operating system must be
-                available from the manufacturer or possibly a third party (for
-                example and open source driver).
+                This code has two limitations, most importantly pyserial must
+                support your platform. Secondly, if you wish to use a
+                usb-to-serial adapter a driver for your target operating system
+                must be available from the manufacturer or possibly a third
+                party (for example and open source driver).
 
         Notes about possible exceptions:
             There are three types of exceptions that can happen:

@@ -49,6 +49,14 @@
         For more information try, ``pyoptical --help``. For more information about the
         com-port argument see the docstring of the OptiCAL class.
 
+    Library:
+        >>> import pyoptical
+        >>> op = pyoptical.OptiCAL('dev/dev/ttyUSB0')
+        >>> try:
+        >>>     op.read_luminance()
+        >>> except pyoptical.NACKException, e:
+        >>>     print e
+
 """
 __version__ = "0.3-dev"
 __author__ = "Valentin Haenel <valentin.haenel@gmx.de>"
@@ -58,15 +66,6 @@ import serial
 
 class OptiCAL(object):
     """ Object to access the OptiCAL
-
-        Example:
-
-        import pyoptical
-        op = pyoptical.OptiCAL('dev/dev/ttyUSB0')
-        try:
-            op.read_luminance()
-        except pyoptical.NACKException, e:
-            print e
 
         Notes about the com_port:
             The com_port argument for the constructor may vary depending on both

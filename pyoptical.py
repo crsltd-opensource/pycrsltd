@@ -33,7 +33,7 @@
 import serial
 
 class OptiCAL(object):
-    """ object to access the OptiCAL
+    """ Object to access the OptiCAL
 
         Example:
 

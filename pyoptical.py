@@ -180,13 +180,14 @@ class OptiCAL(object):
     def __init__(self, com_port, timeout=5):
         """ initialise OptiCAL
 
-            arguments:
-                com_port:   name of the com_port
-                timeout:    time in seconds to wait for a response
+            :Parameters:
+                com_port : string
+                    name of the com-port
+                timeout : float
+                    time in seconds to wait for a response
 
-            For more information about the 'com_port' argument see
-            the docstring of the class.
-
+            For more information about the ``com_port`` argument see:
+            `Notes about the com-port`_.
         """
         self._phot = serial.Serial(com_port, timeout=timeout)
         self._calibrate()
@@ -207,7 +208,15 @@ class OptiCAL(object):
                "K_cal:             " + str(self._K_cal) + "\n"
 
     def _send_command(self, command, description):
-        """ send a single command character and read a single response (ACK/NACK)"""
+        """ send a single command character and read a single response (ACK/NACK)
+
+            :Parameters:
+                command : chr
+                    the command character
+                description : string
+                    a string describing the command
+
+        """
         self._phot.write(command)
         ret = self._phot.read()
         _check_return(ret, description)
@@ -228,13 +237,15 @@ class OptiCAL(object):
     def _read_eeprom_single(self, address):
         """ read contents of eeprom at single address
 
-            arguments:
-                address: an integer in the range 0<i<100
-
-            returns:
-                a byte in the range 0<i<256 as str
-
             note: the ACK byte is truncated
+
+            :Parameters:
+                address : int
+                    addres in the range 0<i<100
+
+            :Return:
+                (string) - a byte in the range 0<i<256
+
         """
         self._phot.write(chr(128+address))
         ret = self._phot.read(2)
@@ -245,12 +256,14 @@ class OptiCAL(object):
     def _read_eeprom(self, start, stop):
         """ read contents of eeprom between start and stop inclusive
 
-            arguments:
-                start: an integer in the range 0<i<100
-                stop: and integer in the range 0<i<100
+            :Parameters:
+                start : int
+                    addres in the range 0<i<100
+                stop : int
+                    addres in the range 0<i<100
 
-            returns:
-                a string of bytes, each in the range 0<i<255
+            :Returns:
+                (string of bytes) - each charcter in the range 0<i<255
         """
         return "".join([self._read_eeprom_single(i) for i in range(start, stop+1)])
 

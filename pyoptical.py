@@ -26,7 +26,22 @@
     @author:  Valentin Haenel <valentin.haenel@gmx.de>
     @version: 0.3-dev
 
-    This module provides the 'OptiCAL' class and some supporting code.
+    This module provides the 'OptiCAL' class and some supporting code. The
+    module can be used as used as a library in third-party applications or as a
+    standalone command line tool. For a usage example as a library, see the
+    docstring of the OptiCAL class.
+
+    Command line usage:
+        pyoptical [-i interval] [-n number ] [-r] com-port
+
+    Example:
+
+        pyoptical --interval=750 --number=15 /dev/ttyUSB0
+
+        Make 15 measurments with an interval of 750 ms between them.
+
+    For more information try, 'pyoptical --help. For more information about the
+    com-port argument (/dev/ttyUSB0), see the docstring of the OptiCAL class.
 
 """
 

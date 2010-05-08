@@ -23,15 +23,17 @@
 
 """ Python interface to the CRS 'OptiCAL' photometer.
 
-    This module provides the 'OptiCAL' class and some supporting code. The
-    module can be used as used as a library in third-party applications or as a
-    standalone command line tool. For a usage example as a library, see the
-    docstring of the OptiCAL class.
+    Overview
+    ========
 
-    Command line usage:
-        pyoptical [-i interval] [-n number ] [-r] com-port
+    The 'OptiCAL' is a photometer that is produced by Cambridge Research Systems
+    (CRS). This device is a standard tool for gamma-calibration of display devices
+    in vision research. This package provides a free-software replacement for the
+    Windows-software distributed by the manufacturer that allows querying an OptiCAL
+    via a serial connection. `pyoptical` can be used as a library in third-party
+    applications or as a standalone command line tool.
 
-    Example:
+    This module provides the `OptiCAL` class and some supporting code.
 
     Examples
     --------

@@ -41,7 +41,7 @@ class OptiCAL(object):
         op = pyoptical.OptiCAL('dev/dev/ttyUSB0')
         try:
             op.read_luminance()
-        except pyoptical.NACKException as e:
+        except pyoptical.NACKException, e:
             print e
 
         Notes about the com_port:

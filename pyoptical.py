@@ -187,7 +187,7 @@ class OptiCAL(object):
                     time in seconds to wait for a response
 
             For more information about the ``com_port`` argument see:
-            `Notes about the com-port`_.
+            the '``Notes about the com-port``' section in the module docstring.
         """
         self._phot = serial.Serial(com_port, timeout=timeout)
         self._calibrate()

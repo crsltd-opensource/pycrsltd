@@ -57,6 +57,110 @@
         >>> except pyoptical.NACKException, e:
         >>>     print e
 
+    Notes about the com-port
+    ------------------------
+
+    The com_port argument for the constructor may vary depending on both
+    your operating system and how you connect to the OptiCAL. This code
+    was developed using a usb-to-serial adapter that contains a PL2303
+    chipset manufactured by Prolific:
+    http://www.prolific.com.tw/eng/Products.asp?ID=59. The following
+    sections outline how to access the OptiCAL using pyoptical and a
+    usb-to-serial adapter containing the prolific chipset. We have not
+    tried this code using a raw serial port, but would be very
+    interested to hear from you if you do.
+
+    Linux (Ubuntu Hardy / Debian Lenny):
+        Support for the PL2303 chipset is compiled into the kernel, and
+        the device is automatically recognised. You could check 'dmesg'
+        for the following output::
+
+            usb 2-1: new full speed USB device using uhci_hcd and address 4
+            usb 2-1: configuration #1 chosen from 1 choice
+            pl2303 2-1:1.0: pl2303 converter detected
+            usb 2-1: pl2303 converter now attached to ttyUSB0
+
+        In this case the com_port string is simply ``/dev/ttyUSB0``
+
+    Mac OSX (10.5.8 Leopard)
+        Support for the PL2303 chipset is provided by the following
+        open source driver: http://osx-pl2303.sourceforge.net/
+
+        In this case the com-port string would be something along the
+        lines of ``/dev/tty.PL2303-xxx``, for example:
+        ``/dev/tty.PL2303-000031FD``
+
+    Windows (XP)
+        The manufacturer of your usb-to-serial adapter should provide
+        you with drivers.
+
+        In this case the com-port string would be something like:
+        ``COM2``, check the device manager for the number of the COM port.
+
+    Other Operating Systems and Adapters:
+        This code has two limitations, most importantly pyserial must
+        support your platform. Secondly, if you wish to use a
+        usb-to-serial adapter a driver for your target operating system
+        must be available from the manufacturer or possibly a third
+        party (for example and open source driver).
+
+    Notes about possible exceptions
+    -------------------------------
+
+    There are three types of exceptions that can happen:
+
+    - `OptiCALException`
+    - `NACKException`
+    - `TimeoutException`
+
+    The `OptiCALException` is the base class for all exceptions in this
+    module, and it is used as a general purpose exception to signify
+    errors on the part of the programmer, do not quietly except these.
+
+    The `NACKException` is raised when the OptiCAL responds with a ``NACK``
+    byte. It does this either if the command was not understood or if
+    the command failed. If this happens during initialization, you may
+    have to re-initialise the device. If this happens during readout it
+    should be safe to try again instead of terminating the program.
+
+    The `TimeoutException` is raised when no answer is received within the
+    default timeout length. This might be caused by a number of issues,
+    but essentially means that somehow the communication with the
+    OptiCAL might be interrupted, for example because it is no longer
+    connected to the computer.
+
+    Implementation details
+    ----------------------
+
+    The interface is implemented according to the protocol specification in the
+    OptiCAL-User-Guide Version 4, 1995 including the following amendments:
+
+    1. To read out the ADC value, an 'L' must be sent instead of an 'R'
+    2. The equations to convert from ADC to meaningful units had changed. See
+       read_luminance() and read_voltage() for details.
+
+    The full errata is available from the CSR website:
+
+    http://support.crsltd.com/FileManagement/Download/9f5f62bcb3e64eb8934fe72afb937cb6
+
+    The corrected versions of the conversion formulas can also be found
+    in the OptiCAL.py python interface available from the CRS website,
+    written by Walter F. Bischof in 2007.
+
+    The constructor will first perform the initial calibration of the
+    device as required by the protocol specification. Next it will read
+    out all parameters from the eeprom and store them as private
+    variables. And lastly it will put the device into the default mode.
+
+    The initial version of the OptiCAL hardware supported two readout
+    modes 'current' and 'voltage'. The device could be used to read
+    luminace when in 'current' mode and 'voltage' when in voltage mode.
+    Over the years there have been two revisions of the OptiCAL
+    hardware, both no longer supported usage as a voltmeter, and thus
+    the 'voltage' mode has become redundant. Since version 0.2 this
+    interface no longer supports the 'voltage' mode, and the device will
+    be put into 'current' mode at startup.
+
 """
 __version__ = "0.3-dev"
 __author__ = "Valentin Haenel <valentin.haenel@gmx.de>"
@@ -65,107 +169,7 @@ __docformat__ = "restructuredtext en"
 import serial
 
 class OptiCAL(object):
-    """ Object to access the OptiCAL
-
-        Notes about the com_port:
-            The com_port argument for the constructor may vary depending on both
-            your operating system and how you connect to the OptiCAL. This code
-            was developed using a usb-to-serial adapter that contains a PL2303
-            chipset manufactured by Prolific:
-            http://www.prolific.com.tw/eng/Products.asp?ID=59. The following
-            sections outline how to access the OptiCAL using pyoptical and a
-            usb-to-serial adapter containing the prolific chipset. We have not
-            tried this code using a raw serial port, but would be very
-            interested to hear from you if you do.
-
-            Linux (Ubuntu Hardy / Debian Lenny):
-                Support for the PL2303 chipset is compiled into the kernel, and
-                the device is automatically recognised. You could check 'dmesg'
-                for the following output:
-
-                usb 2-1: new full speed USB device using uhci_hcd and address 4
-                usb 2-1: configuration #1 chosen from 1 choice
-                pl2303 2-1:1.0: pl2303 converter detected
-                usb 2-1: pl2303 converter now attached to ttyUSB0
-
-                In this case the com_port string is simply '/dev/ttyUSB0'
-
-            Mac OSX (10.5.8 Leopard)
-                Support for the PL2303 chipset is provided by the following
-                open source driver: http://osx-pl2303.sourceforge.net/
-
-                In this case the com_port string would be something along the
-                lines of '/dev/tty.PL2303-xxx', for example:
-                '/dev/tty.PL2303-000031FD'
-
-            Windows (XP)
-                The manufacturer of your usb-to-serial adapter should provide
-                you with drivers.
-
-                In this case the com_port string would be something like:
-                'COM2', check the device manager for the number of the COM port.
-
-            Other Operating Systems and Adapters:
-
-                This code has two limitations, most importantly pyserial must
-                support your platform. Secondly, if you wish to use a
-                usb-to-serial adapter a driver for your target operating system
-                must be available from the manufacturer or possibly a third
-                party (for example and open source driver).
-
-        Notes about possible exceptions:
-            There are three types of exceptions that can happen:
-                OptiCALException
-                NACKException
-                TimeoutException
-
-            The OptiCALException is the base class for all exceptions in this
-            module, and it is used as a general purpose exception to signify
-            errors on the part of the programmer, do not quietly except these.
-
-            The NACKException is raised when the OptiCAL responds with a NACK
-            byte. It does this either if the command was not understood or if
-            the command failed. If this happens during initialization, you may
-            have to re-initialise the device. If this happens during readout it
-            should be safe to try again instead of terminating the program.
-
-            The TimeoutException is raised when no answer is received within the
-            default timeout length. This might be caused by a number of issues,
-            but essentially means that somehow the communication with the
-            OptiCAL might be interrupted, for example because it is no longer
-            connected to the computer.
-
-        Implementation details:
-
-            The interface is implemented according to the protocol specification in the
-            OptiCAL-User-Guide Version 4, 1995 including the following amendments:
-                a) To read out the ADC value, an 'L' must be sent instead of an 'R'
-                b) The equations to convert from ADC to meaningful units had changed. See
-                read_luminance() and read_voltage() for details.
-
-            The full errata is available from the CSR website:
-
-            http://support.crsltd.com/FileManagement/Download/9f5f62bcb3e64eb8934fe72afb937cb6
-
-            The corrected versions of the conversion formulas can also be found
-            in the OptiCAL.py python interface available from the CRS website,
-            written by Walter F. Bischof in 2007.
-
-            The constructor will first perform the initial calibration of the
-            device as required by the protocol specification. Next it will read
-            out all parameters from the eeprom and store them as private
-            variables. And lastly it will put the device into the default mode.
-
-            The initial version of the OptiCAL hardware supported two readout
-            modes 'current' and 'voltage'. The device could be used to read
-            luminace when in 'current' mode and 'voltage' when in voltage mode.
-            Over the years there have been two revisions of the OptiCAL
-            hardware, both no longer supported usage as a voltmeter, and thus
-            the 'voltage' mode has become redundant. Since version 0.2 this
-            interface no longer supports the 'voltage' mode, and the device will
-            be put into 'current' mode at startup.
-
-    """
+    """ Object to access the OptiCAL """
 
     _ACK = '\x06'
     _NACK = '\x15'

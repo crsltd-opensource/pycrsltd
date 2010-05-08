@@ -41,7 +41,7 @@
     Command line:
         ``pyoptical --number=15 --interval=750 /dev/ttyUSB0``
 
-        Make 15 measurments with an interval of 750 ms between them.
+        Make 15 measurements with an interval of 750 ms between them.
 
         usage:
             ``pyoptical [-i interval] [-n number ] [-r] com-port``
@@ -157,7 +157,7 @@
 
     The initial version of the OptiCAL hardware supported two readout
     modes 'current' and 'voltage'. The device could be used to read
-    luminace when in 'current' mode and 'voltage' when in voltage mode.
+    luminance when in 'current' mode and 'voltage' when in voltage mode.
     Over the years there have been two revisions of the OptiCAL
     hardware, both no longer supported usage as a voltmeter, and thus
     the 'voltage' mode has become redundant. Since version 0.2 this
@@ -241,7 +241,7 @@ class OptiCAL(object):
 
             :Parameters:
                 address : int
-                    addres in the range 0<i<100
+                    address in the range 0<i<100
 
             :Return:
                 (string) - a byte in the range 0<i<256
@@ -250,7 +250,7 @@ class OptiCAL(object):
         self._phot.write(chr(128+address))
         ret = self._phot.read(2)
         _check_return(ret, "reading eeprom at address %d" % address)
-        # if _check_return does not raise an excpetion
+        # if _check_return does not raise an exception
         return ret[0]
 
     def _read_eeprom(self, start, stop):
@@ -258,12 +258,12 @@ class OptiCAL(object):
 
             :Parameters:
                 start : int
-                    addres in the range 0<i<100
+                    address in the range 0<i<100
                 stop : int
-                    addres in the range 0<i<100
+                    address in the range 0<i<100
 
             :Returns:
-                (string of bytes) - each charcter in the range 0<i<255
+                (string of bytes) - each character in the range 0<i<255
         """
         return "".join([self._read_eeprom_single(i) for i in range(start, stop+1)])
 
@@ -337,7 +337,7 @@ def _to_int(byte_string):
     return int(byte_string[::-1].encode('hex'), 16)
 
 def _check_return(ret, description):
-    """ check the return value of a read, raise exception if its not o.k. """
+    """ check the return value of a read, raise exception if its not OK """
     if ret == "":
         raise TimeoutException(description)
     if OptiCAL._NACK in ret:

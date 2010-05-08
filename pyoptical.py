@@ -55,10 +55,10 @@ class OptiCAL(object):
             tried this code using a raw serial port, but would be very
             interested to hear from you if you do.
 
-            Linux (Ubuntu Hardy):
-                Support for the PL2303 chipset is compiled into the kernel, and the device
-                is automatically recognised. You could check 'dmesg' for the
-                following output:
+            Linux (Ubuntu Hardy / Debian Lenny):
+                Support for the PL2303 chipset is compiled into the kernel, and
+                the device is automatically recognised. You could check 'dmesg'
+                for the following output:
 
                 usb 2-1: new full speed USB device using uhci_hcd and address 4
                 usb 2-1: configuration #1 chosen from 1 choice

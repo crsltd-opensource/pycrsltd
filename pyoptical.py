@@ -23,9 +23,6 @@
 
 """ pyoptical - a pure python interface to the CRS 'OptiCAL' photometer
 
-    @author:  Valentin Haenel <valentin.haenel@gmx.de>
-    @version: 0.3-dev
-
     This module provides the 'OptiCAL' class and some supporting code. The
     module can be used as used as a library in third-party applications or as a
     standalone command line tool. For a usage example as a library, see the
@@ -44,6 +41,8 @@
     com-port argument (/dev/ttyUSB0), see the docstring of the OptiCAL class.
 
 """
+__version__ = "0.3-dev"
+__author__ = "Valentin Haenel <valentin.haenel@gmx.de>"
 
 import serial
 
@@ -315,13 +314,6 @@ def _check_return(ret, description):
     if OptiCAL._NACK in ret:
         raise NACKException(description)
 
-def get_version():
-    """ extract version from module docstring """
-    start = __doc__.find("@version")+10
-    end = __doc__.find("\n\n", start)
-    version = __doc__[start: end]
-    return version
-
 class OptiCALException(Exception):
     """ base exception for all OptiCAL exceptions """
 
@@ -337,7 +329,7 @@ class TimeoutException(OptiCALException):
 
 if __name__ == "__main__":
     usage = "%prog [-i interval] [-n number ] [-r] com-port"
-    version = "%prog: " + get_version()
+    version = "%prog: " + __version__
     error_prefix = "pyoptical.py: error:"
 
     from optparse import OptionParser

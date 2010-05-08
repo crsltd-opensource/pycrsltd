@@ -46,8 +46,8 @@
         usage:
             ``pyoptical [-i interval] [-n number ] [-r] com-port``
 
-        For more information try, ``pyoptical --help``. For more information about the
-        com-port argument see the docstring of the OptiCAL class.
+        For more information try, ``pyoptical --help``. For more information
+        about the ``com-port`` argument see: `Notes about the com-port`_.
 
     Library:
         >>> import pyoptical
@@ -137,7 +137,7 @@
 
     1. To read out the ADC value, an 'L' must be sent instead of an 'R'
     2. The equations to convert from ADC to meaningful units had changed. See
-       read_luminance() and read_voltage() for details.
+       the source code of ``read_luminance()`` for details.
 
     The full errata is available from the CSR website:
 
@@ -145,7 +145,10 @@
 
     The corrected versions of the conversion formulas can also be found
     in the OptiCAL.py python interface available from the CRS website,
-    written by Walter F. Bischof in 2007.
+    written by Walter F. Bischof in 2007. However note that this code may
+    contain a bug, see
+    http://groups.google.com/group/psychopy-users/msg/9cb35590daf3a29b
+    for detail.
 
     The constructor will first perform the initial calibration of the
     device as required by the protocol specification. Next it will read

@@ -8,6 +8,7 @@ setup(name='pyoptical',
       description='Pure python interface to OptiCAL',
       author='Valentin Haenel',
       author_email='valentin.haenel@gmx.de',
+      url='http://github.com/esc/pyoptical',
       py_modules=['pyoptical'],
       scripts=['pyoptical']
      )

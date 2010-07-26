@@ -33,7 +33,8 @@
     via a serial connection. `pyoptical` can be used as a library in third-party
     applications or as a standalone command line tool.
 
-    This module provides the `OptiCAL` class and some supporting code.
+    This module provides the `OptiCAL` class and some supporting code. The
+    command line wrapper for this module can be found in the 'pyoptical' script.
 
     Examples
     --------

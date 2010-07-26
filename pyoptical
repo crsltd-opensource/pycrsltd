@@ -22,15 +22,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+""" Command line wrapper for the pyoptical module. """
+
+import pyoptical as pyop
+from optparse import OptionParser
+import sys
+import time
+from itertools import repeat
+
 if __name__ == "__main__":
     usage = "%prog [-i interval] [-n number ] [-r] com-port"
-    version = "%prog: " + __version__
-    error_prefix = "pyoptical.py: error:"
-
-    from optparse import OptionParser
-    import sys
-    import time
-    from itertools import repeat
+    version = "%prog: " + pyop.__version__
+    error_prefix = "pyoptical -- error:"
 
     parser = OptionParser(usage="\n  " + usage, version=version)
 
@@ -57,14 +60,14 @@ if __name__ == "__main__":
         parser.error("wrong number of arguments")
         sys.exit(-1)
 
-    op = OptiCAL(args[0])
+    op = pyop.OptiCAL(args[0])
 
     # this is a hack, either it executes opts.number times, or endlessly
     for i in repeat(None) if opts.number is None else repeat(None, opts.number):
         try:
             print op.read_luminance()
             time.sleep(opts.interval/1000)
-        except OptiCALException, e:
+        except pyop.OptiCALException, e:
             sys.stderr.write(error_prefix + str(e) + "\n")
             if opts.robust:
                 continue

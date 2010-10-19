@@ -166,7 +166,7 @@
     be put into 'current' mode at startup.
 
 """
-__version__ = "0.3"
+__version__ = "0.4-dev"
 __author__ = "Valentin Haenel <valentin.haenel@gmx.de>"
 __docformat__ = "restructuredtext en"
 

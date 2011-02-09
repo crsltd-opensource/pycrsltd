@@ -21,9 +21,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pycrsltd.__version__    =       '0.1'
-pycrsltd.__author__     =       'Jon Peirce'
-pycrsltd.__author_email__=      'jon at peirce.org.uk'
-pycrsltd.__url__        =       'https://github.com/crsltd-opensource/pycrsltd'
-pycrsltd.__license__    =       'MIT'
-pycrsltd.__downloadUrl__=       'https://github.com/crsltd-opensource/pycrsltd'
+__version__    =       '0.1'
+__author__     =       'Jon Peirce'
+__author_email__=      'jon at peirce.org.uk'
+__url__        =       'https://github.com/crsltd-opensource/pycrsltd'
+__license__    =       'MIT'
+__downloadUrl__=       'https://github.com/crsltd-opensource/pycrsltd'

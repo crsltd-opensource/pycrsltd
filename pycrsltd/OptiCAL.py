@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 #coding=utf-8
 
-# Copyright (c) Cambridge Research Systems (CRS) Ltd 
+# Copyright (c) 2009,2010 Valentin Haenel <valentin.haenel@gmx.de>
+# Copyright (c) 2011 Jon Peirce <jon@peirce.org.uk> Cambridge Research Systesm (CRS) Ltd
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,11 +22,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-#Acknowledgements:
-#    The code here is based on idenpendently written libs by 
-#    Valentin Haenel <valentin.haenel@gmx.de> and Walter Bischoff, 
-#    combined and restructured by Jon Peirce <jon@peirce.org.uk>
-    
 """ Python interface to the CRS 'OptiCAL' photometer.
 
     Overview

@@ -24,7 +24,7 @@
 
 """ Command line wrapper for the pyoptical module. """
 
-import pyoptical as pyop
+import OptiCAL as pyop
 from optparse import OptionParser
 import sys
 import time

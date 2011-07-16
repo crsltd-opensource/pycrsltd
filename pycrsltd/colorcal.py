@@ -76,7 +76,8 @@ class ColorCAL:
                 self._error("Opened serial port %s, but couldn't connect to ColorCAL" %self.portString)
                 
         ret = self._calibrate()
-        self.OK = (ret[0]=='OK00')
+        print 'ret', ret
+        self.OK = (ret=='OK00')
         
     def sendMessage(self, message, timeout=5.0):
         """Send a command to the photometer and wait an alloted
@@ -86,7 +87,10 @@ class ColorCAL:
             message+='\n'     #append a newline if necess
         
         #flush the read buffer first
-        self.com.read(self.com.inWaiting())#read as many chars as are in the buffer
+        prevMsg = self.com.read(self.com.inWaiting())#read as many chars as are in the buffer
+        if len(prevMsg) and prevMsg!='>\n': 
+            print 'prevMsg found:', prevMsg
+            
         for attemptN in range(self.maxAttempts):
             #send the message
             self.com.write(message)
@@ -94,11 +98,15 @@ class ColorCAL:
             #get reply (within timeout limit)
             self.com.setTimeout(timeout)
             log.debug('Sent command:'+message[:-2])#send complete message
-            retVal= self.com.readline()
-            if len(retVal)>1:break#we got a reply so can stop trying
-        while retVal.startswith('\r'): retVal=retVal[1:]
-        while retVal.endswith('\n'): retVal=retVal[:-1]
-        return retVal.split(',')
+            if message in ['?\n']:
+                retVal= self.com.readlines()
+                if len(retVal)==1:break#we got a reply so can stop trying
+            else:
+                retVal= self.com.readline()
+                while retVal.startswith('\r'): retVal=retVal[1:]
+                while retVal.endswith('\n'): retVal=retVal[:-1]
+                if len(retVal)>1:break#we got a reply so can stop trying
+        return retVal
     
     def measure(self):
         """Conduct a measurement and return the X,Y,Z values

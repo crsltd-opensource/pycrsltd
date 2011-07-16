@@ -25,38 +25,47 @@
 #    This code written by Jon Peirce <jon@peirce.org.uk>. The BitsPlusPlus code was
 #    originally as part of the PsychoPy library (http://www.psychopy.org).
 
-"""Interface to the bits++ (http://www.crsltd.com/) for precise control of contrast
-
-These may one day get built into psychopy.visual
+"""Interface to the bits++ (http://www.crsltd.com/) for hi-res luminance/contrast control
 """
 
+DEBUG=True
+
 import numpy
-from sys import platform
+import shaders
 from copy import copy
-from psychopy import misc, log, monitors
+import logging
 from OpenGL import GL
-import OpenGL.GL.ARB.multitexture as GL_multitexture
 try:
     from psychopy.ext import _bits
     haveBitsDLL=True
 except:
     haveBitsDLL=False
-
+    
+if DEBUG: #we don't want error skipping in debug mode!
+    import shaders
+    haveShaders=True
+else:
+    try:
+        import shaders
+        haveShaders=True
+    except:
+        haveShaders=False
+        
 bits8BITPALETTEMODE 		=  0x00000001  #/* normal vsg mode */
 NOGAMMACORRECT  	=  0x00004000  #/* Gamma correction mode */
 GAMMACORRECT    		=  0x00008000  #/* Gamma correction mode */
 VIDEOENCODEDCOMMS =  0x00080000 # needs to be set so that LUT is read from screen
 
-DEBUG=True
 
 class BitsBox:
     """The main class to control a bits++ box.
     
-    This is usually a class added within the window object and is typically accessed from there.
+    If you're using PsychoPy you can usually access Bits++ functions directly
+    from your PsychoPy Window
     e.g.::
         
         from psychopy import visual
-        win = visual.Window([800,600], bitsMode='fast')
+        win = visual.Window([800,600], mode='bits++')
         win.bits.setContrast(0.5)#use bits++ to reduce the whole screen contrast by 50%
         
     """
@@ -65,12 +74,19 @@ class BitsBox:
                     contrast=1.0,
                     gamma=[1.0,1.0,1.0],
                     nEntries=256,
-                    bitsType='bits++',):
+                    mode='bits++',):
         self.win = win
         self.contrast=contrast
         self.nEntries=nEntries
-        self.bitsType=bitsType
-        self.method = 'fast'
+        #set standardised name for mode
+        if mode in ['bits','bits++']:
+            self.mode = 'bits++'
+        elif mode in ['color','color++','colour','colour++']:
+            self.mode = 'color++'
+        elif mode in ['mono','mono++']:
+            self.mode = 'mono++'
+        else:
+            logging.error("Unknown mode '%s' for BitsBox" %mode)
         
         if len(gamma)>2: # [Lum,R,G,B] or [R,G,B]
             self.gamma=gamma[-3:]
@@ -80,21 +96,25 @@ class BitsBox:
         if init(): 
             setVideoMode(NOGAMMACORRECT|VIDEOENCODEDCOMMS)
             self.initialised=True
-            log.debug('found and initialised bits++')
+            logging.debug('found and initialised bits++')
         else: 
             self.initialised=False
-            log.warning("couldn't initialise bits++")
-
-        #do the processing
-        self._HEADandLUT = numpy.zeros((524,1,3),numpy.uint8)
-        self._HEADandLUT[:12,:,0] = numpy.asarray([ 36, 63, 8, 211, 3, 112, 56, 34,0,0,0,0]).reshape([12,1])#R
-        self._HEADandLUT[:12,:,1] = numpy.asarray([ 106, 136, 19, 25, 115, 68, 41, 159,0,0,0,0]).reshape([12,1])#G
-        self._HEADandLUT[:12,:,2] = numpy.asarray([ 133, 163, 138, 46, 164, 9, 49, 208,0,0,0,0]).reshape([12,1])#B
-        self.LUT=numpy.zeros((256,3),'d')		#just a place holder
-        self.setLUT()#this will set self.LUT and update self._LUTandHEAD
+            logging.warning("couldn't initialise bits++")
         
-
-    def setLUT(self,newLUT=None, gammaCorrect=True, LUTrange=1.0):		
+        if self.mode == 'bits++':
+            #do the processing
+            self._HEADandLUT = numpy.zeros((524,1,3),numpy.uint8)
+            self._HEADandLUT[:12,:,0] = numpy.asarray([ 36, 63, 8, 211, 3, 112, 56, 34,0,0,0,0]).reshape([12,1])#R
+            self._HEADandLUT[:12,:,1] = numpy.asarray([ 106, 136, 19, 25, 115, 68, 41, 159,0,0,0,0]).reshape([12,1])#G
+            self._HEADandLUT[:12,:,2] = numpy.asarray([ 133, 163, 138, 46, 164, 9, 49, 208,0,0,0,0]).reshape([12,1])#B
+            self.LUT=numpy.zeros((256,3),'d')#just a place holder
+            self.setLUT()#this will set self.LUT and update self._LUTandHEAD
+        elif haveShaders:
+            self.monoModeShader = shaders.compileProgram(fragment=shaders.bitsMonoModeFrag, 
+                                   attachments=[shaders.gammaCorrectionFrag])
+            self.colorModeShader =shaders.compileProgram(fragment=shaders.bitsColorModeFrag, 
+                                   attachments=[shaders.gammaCorrectionFrag])
+    def setLUT(self,newLUT=None, gammaCorrect=True, LUTrange=1.0):
         """Sets the LUT to a specific range of values.
         
         Note that, if you leave gammaCorrect=True then any LUT values you supply
@@ -106,7 +126,7 @@ class BitsBox:
         
         **Examples:**
             ``bitsBox.setLUT()``
-            	builds a LUT using bitsBox.contrast and bitsBox.gamma
+                builds a LUT using bitsBox.contrast and bitsBox.gamma
             
             ``bitsBox.setLUT(newLUT=some256x1array)``
                 (NB array should be float 0.0:1.0)
@@ -150,7 +170,7 @@ class BitsBox:
             #replicate LUT to other channels
             #check range is 0:1
             if newLUT>1.0:
-                log.warning('newLUT should be float in range 0.0:1.0')
+                logging.warning('newLUT should be float in range 0.0:1.0')
             self.LUT[startII:endII,0]= copy(newLUT.flat)
             self.LUT[startII:endII,1]= copy(newLUT.flat)
             self.LUT[startII:endII,2]= copy(newLUT.flat)
@@ -163,7 +183,7 @@ class BitsBox:
             self.LUT[startII:endII,:]= newLUT
             
         else:
-            log.warning('newLUT can be None, nx1 or nx3')
+            logging.warning('newLUT can be None, nx1 or nx3')
             
         #do gamma correction if necessary
         if gammaCorrect==True:
@@ -172,30 +192,29 @@ class BitsBox:
                 self.LUT[startII:endII, : ] = self.win.monitor.lineariseLums(self.LUT[startII:endII, : ], overrideGamma=gamma)
                 
         #update the bits++ box with new LUT
-        if self.method=='fast':
-            #get bits into correct order, shape and add to header
-            ramp16 = (self.LUT*(2**16-1)).astype(numpy.uint16) #go from ubyte to uint16
-            ramp16 = numpy.reshape(ramp16,(256,1,3))
-            #set most significant bits 
-            self._HEADandLUT[12::2,:,:] = (ramp16[:,:,:]>>8).astype(numpy.uint8)
-            #set least significant bits
-            self._HEADandLUT[13::2,:,:] = (ramp16[:,:,:]&255).astype(numpy.uint8)
-            self._HEADandLUTstr = self._HEADandLUT.tostring()
-            
+        #get bits into correct order, shape and add to header
+        ramp16 = (self.LUT*(2**16-1)).astype(numpy.uint16) #go from ubyte to uint16
+        ramp16 = numpy.reshape(ramp16,(256,1,3))
+        #set most significant bits 
+        self._HEADandLUT[12::2,:,:] = (ramp16[:,:,:]>>8).astype(numpy.uint8)
+        #set least significant bits
+        self._HEADandLUT[13::2,:,:] = (ramp16[:,:,:]&255).astype(numpy.uint8)
+        self._HEADandLUTstr = self._HEADandLUT.tostring()
+        
     def _drawLUTtoScreen(self):
         """(private) Used to set the LUT on the Bits++.
-        Used to draw the LUT to the screen when in 'fast' mode. 
+        Used to draw the LUT to the screen when in 'bits++' mode (not mono++ or colour++). 
         Should not be needed by user if attached to a ``psychopy.visual.Window()``
         since this will automatically draw the LUT as part of the screen refresh.
         """
         #push the projection matrix and set to orthorgaphic
         
-        GL.glMatrixMode(GL.GL_PROJECTION)						
-        GL.glPushMatrix()									
-        GL.glLoadIdentity()				
+        GL.glMatrixMode(GL.GL_PROJECTION)
+        GL.glPushMatrix()
+        GL.glLoadIdentity()
         GL.glOrtho( 0, self.win.size[0],self.win.size[1], 0, 0, 1 )	#this also sets the 0,0 to be top-left
         #but return to modelview for rendering
-        GL.glMatrixMode(GL.GL_MODELVIEW)							
+        GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glLoadIdentity()
         
         #draw the pixels
@@ -209,11 +228,9 @@ class BitsBox:
         GL.glDrawPixelsub(GL.GL_RGB, self._HEADandLUT)
         #GL.glDrawPixels(524,1, GL.GL_RGB,GL.GL_UNSIGNED_BYTE, self._HEADandLUTstr)
         #return to 3D mode (go and pop the projection matrix)
-        GL.glMatrixMode( GL.GL_PROJECTION )					
+        GL.glMatrixMode( GL.GL_PROJECTION )
         GL.glPopMatrix()
         GL.glMatrixMode( GL.GL_MODELVIEW )
-        
-
         
     def setContrast(self,contrast,LUTrange=1.0):
         """Optional parameter LUTrange determines which entries of the LUT
@@ -252,10 +269,31 @@ class BitsBox:
         new one?"""
         self.gamma=newGamma
         self.setLUT() #easiest way to update
-    def reset(self):
-        reset()
-        
-    
+    def loadShader(self):
+        """Load the shader for the current Bits mode (mono++ or color++)
+        """
+        self.lastShaderProg = GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM)
+        if self.mode == 'color++':
+            GL.glUseProgram(self.colorModeShader)
+            print 'using color shader'
+        elif self.mode == 'mono++':
+            GL.glUseProgram(self.monoModeShader)
+            print 'using mono shader'
+        else:
+            logging.error('Bits.loadShader() called, but Bits is in %s mode' %self.mode)
+    def revertShader(self):
+        """Reverts OpenGL to use the shader being used at the point that
+        Bits.loadShader() was last called.
+        """
+        GL.glUseProgram(self.lastShaderProg)
+
+
+#The following all require access to the dll and aren't likely to have any effect
+try:
+    import _bits
+    haveBitsDLL=True
+except:
+    haveBitsDLL=False
 def init():
     """initialise the bits++ box
     Note that, by default, bits++ will perform gamma correction
@@ -274,11 +312,11 @@ def init():
 def setVideoMode(videoMode):
     """set the video mode of the bits++ (win32 only)
     
-    bits8BITPALETTEMODE 		=  0x00000001  #normal vsg mode
+    bits8BITPALETTEMODE=  0x00000001  #normal vsg mode
     
-    NOGAMMACORRECT  	=  0x00004000  #No gamma correction mode
+    NOGAMMACORRECT  =  0x00004000  #No gamma correction mode
     
-    GAMMACORRECT    		=  0x00008000  #Gamma correction mode
+    GAMMACORRECT    =  0x00008000  #Gamma correction mode
     
     VIDEOENCODEDCOMMS =  0x00080000
     
@@ -296,3 +334,4 @@ def reset(noGamma=True):
     """
     OK = init()
     if noGamma and OK: setVideoMode(NOGAMMACORRECT)
+    

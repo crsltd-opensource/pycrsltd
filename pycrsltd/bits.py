@@ -114,6 +114,22 @@ class BitsBox:
                                    attachments=[shaders.gammaCorrectionFrag])
             self.colorModeShader =shaders.compileProgram(fragment=shaders.bitsColorModeFrag, 
                                    attachments=[shaders.gammaCorrectionFrag])
+            GL.glUseProgram(self.colorModeShader)
+            prog = self.colorModeShader
+            GL.glUniform1f(GL.glGetUniformLocation(prog, 'sampleSpacing'), 1.0)
+            #Set default encoding gamma for power-law shader to (1.0, 1.0, 1.0):
+            GL.glUniform3f(GL.glGetUniformLocation(prog, 'ICMEncodingGamma'), 1.0, 1.0, 1.0)
+            # Default min and max luminance is 0.0 to 1.0, therefore reciprocal 1/range is also 1.0:
+            GL.glUniform3f(GL.glGetUniformLocation(prog, 'ICMMinInLuminance'), 0.0, 0.0, 0.0)
+            GL.glUniform3f(GL.glGetUniformLocation(prog, 'ICMMaxInLuminance'), 1.0, 1.0, 1.0)
+            GL.glUniform3f(GL.glGetUniformLocation(prog, 'ICMReciprocalLuminanceRange'), 1.0, 1.0, 1.0)
+            # Default gain to postmultiply is 1.0:
+            GL.glUniform3f(GL.glGetUniformLocation(prog, 'ICMOutputGain'), 1.0, 1.0, 1.0)
+            # Default bias to is 0.0:
+            GL.glUniform3f(GL.glGetUniformLocation(prog, 'ICMOutputBias'), 0.0, 0.0, 0.0)
+            GL.glUniform2f(GL.glGetUniformLocation(prog, 'ICMClampToColorRange'), 0.0, 1.0)
+            GL.glUseProgram(0)
+            
     def setLUT(self,newLUT=None, gammaCorrect=True, LUTrange=1.0):
         """Sets the LUT to a specific range of values.
         

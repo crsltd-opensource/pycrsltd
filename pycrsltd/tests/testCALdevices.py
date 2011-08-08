@@ -9,9 +9,9 @@ except:
     
 def testMinolta2Float():
     import numpy
-    assert colorcal._minolta2Float(50347)== -0.0347
-    assert colorcal._minolta2Float(10630)==  1.0630
-    assert numpy.alltrue(colorcal._minolta2Float([10635, 50631]) == numpy.array([ 1.0635, -0.0631]))
+    assert colorcal._minolta2float(50347)== -0.0347
+    assert colorcal._minolta2float(10630)==  1.0630
+    assert numpy.alltrue(colorcal._minolta2float([10635, 50631]) == numpy.array([ 1.0635, -0.0631]))
     
 def testColorCAL():
     cal = colorcal.ColorCAL('/dev/cu.usbmodem0001', maxAttempts=5)

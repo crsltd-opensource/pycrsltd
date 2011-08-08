@@ -89,7 +89,8 @@ class ColorCAL:
         #flush the read buffer first
         prevMsg = self.com.read(self.com.inWaiting())#read as many chars as are in the buffer
         if len(prevMsg) and prevMsg not in ['>\n', '\r>']:
-            log.debug('prevMsg found:', repr(prevMsg))
+            #do not use log messages here
+            print 'prevMsg found:', prevMsg
 
         retVal=''
         attemptN=0
@@ -99,9 +100,10 @@ class ColorCAL:
             self.com.flush()
             #get reply (within timeout limit)
             self.com.setTimeout(timeout)
-            log.debug('Sent command:%s (attempt %i)' %(message[:-2],attemptN))#send complete message
-            if message in ['?\n']:
+            log.debug('Sent command:%s (attempt %i)' %(message[:-1],attemptN))#send complete message
+            if message in ['?\n', 'r00', 'r01','r02']:
                 retVal=[]
+                time.sleep(0.5)#give it a chance for the command to execute
                 while self.com.inWaiting():
                     retVal.append(self.com.readline())
             else:
@@ -166,22 +168,23 @@ class ColorCAL:
     def getMatrix(self):
 
         matrix=numpy.zeros((3,3),dtype=float)
-        for rowN in range(4):
-            val = self.sendMessage('r0%i' %rowN)
+        for rowN in range(3):
+            val = self.sendMessage('r0%i' %rowN, timeout=1.0)
             vals=val.split(',')#convert to list of values
 
             if vals[0]=='OK00' and len(vals)>1:
                 #convert to numpy array
                 rawVals=numpy.array(vals[1:], dtype=int)
-                log.debug('row %i: x=%i, y=%i, z=%i' %(vals[0],vals[2],vals[3]))
+                matrix[rowN,:] = _minolta2float(rawVals)
+                print 'row %i: %s %s' %(rowN,rawVals,matrix[rowN,:])
             else:
                 print 'got this from command r0%i: %s' %(rowN, repr(val))
-            time.sleep(0.1)
+        return matrix
     def _error(self, msg):
         self.OK=False
         log.error(msg)
 
-def _minolta2Float(inVal):
+def _minolta2float(inVal):
     """Takes a number, or numeric array (any shape) and returns the appropriate
     float.
 

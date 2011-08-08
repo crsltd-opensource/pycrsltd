@@ -29,6 +29,7 @@ __docformat__ = "restructuredtext en"
 import time
 try: import serial
 except: serial=False
+import numpy
 
 try: from psychopy import log
 except:
@@ -74,9 +75,9 @@ class ColorCAL:
                 self.isOpen=1
             except:
                 self._error("Opened serial port %s, but couldn't connect to ColorCAL" %self.portString)
-
-        ret = self._calibrate()
-        self.OK = (ret=='OK00')
+        #check that we can communicate with it
+        ok, ser, firm, firmBuild = self.getInfo()
+        self.OK = ok
 
     def sendMessage(self, message, timeout=1.0):
         """Send a command to the photometer and wait an alloted
@@ -98,7 +99,7 @@ class ColorCAL:
             self.com.flush()
             #get reply (within timeout limit)
             self.com.setTimeout(timeout)
-            log.debug('Sent command:'+message[:-2])#send complete message
+            log.debug('Sent command:%s (attempt %i)' %(message[:-2],attemptN))#send complete message
             if message in ['?\n']:
                 retVal=[]
                 while self.com.inWaiting():
@@ -131,11 +132,78 @@ class ColorCAL:
         x, y, z = float(ret[1]), float(ret[2]), float(ret[3])
         return ok, x, y, z
 
-    def _calibrate(self):
-        """This should be done before any measurements are taken
-        """
-        return self.sendMessage("UZC")
+    def getInfo(self):
+        """Queries the device for information
 
+        usage::
+            ok, serialNumber, firmwareVersion, firmwareBuild = colorCal.getInfo()
+
+        `ok` will be True/False
+        Other values will be a string or None.
+
+        """
+        retVal = self.sendMessage('IDR').split(',')
+        ok = (retVal[0]=='OK00')
+        if ok:
+            firmware=retVal[2]
+            serialNum=retVal[4]
+            firmBuild=retVal[-1]
+        else:
+            firmware=0
+            serialNum=0
+            firmBuild=0
+        return ok, serialNum, firmware, firmBuild
+
+    def calibrateZero(self):
+        """This should be done once before any measurements are taken when
+        """
+        val = self.sendMessage("UZC")
+        if val=='OK00':
+            return True
+        elif val=='ER11':
+            log.error("Could not calibrate ColorCAL2. Is it properly covered?")
+        return 0#if we got here there was a problem, either reading or an ER11
+    def getMatrix(self):
+
+        matrix=numpy.zeros((3,3),dtype=float)
+        for rowN in range(4):
+            val = self.sendMessage('r0%i' %rowN)
+            vals=val.split(',')#convert to list of values
+
+            if vals[0]=='OK00' and len(vals)>1:
+                #convert to numpy array
+                rawVals=numpy.array(vals[1:], dtype=int)
+                log.debug('row %i: x=%i, y=%i, z=%i' %(vals[0],vals[2],vals[3]))
+            else:
+                print 'got this from command r0%i: %s' %(rowN, repr(val))
+            time.sleep(0.1)
     def _error(self, msg):
         self.OK=False
         log.error(msg)
+
+def _minolta2Float(inVal):
+    """Takes a number, or numeric array (any shape) and returns the appropriate
+    float.
+
+    minolta stores;
+        +ve values as val*10000
+        -ve values as -val*10000+50000
+
+    >>> _minolta2Float(50347)#NB returns a single float
+    -0.034700000000000002
+    >>> _minolta2Float(10630)
+    1.0630999999999999
+    >>> _minolta2Float([10635, 50631])#NB returns a numpy array
+    array([ 1.0635, -0.0631])
+
+    """
+    arr=numpy.asarray(inVal)#convert  to array if needed
+    #handle single vals
+    if arr.shape==():
+        if inVal<50000: return inVal/10000.0
+        else: return (-inVal+50000.0)/10000.0
+    #handle arrays
+    negs = (arr>50000)#find negative values
+    out = arr/10000.0#these are the positive values
+    out[negs] = (-arr[negs]+50000.0)/10000.0
+    return out

@@ -78,8 +78,8 @@ class ColorCAL:
             except:
                 self._error("Opened serial port %s, but couldn't connect to ColorCAL" %self.portString)
         #check that we can communicate with it
-        ok, ser, firm, firmBuild = self.getInfo()
-        self.OK = ok
+        self.ok, self.serialNum, self.firm, self.firmBuild = self.getInfo()
+        self.calibMatrix=self.getCalibMatrix()
 
     def sendMessage(self, message, timeout=0.1):
         """Send a command to the photometer and wait an alloted
@@ -135,11 +135,12 @@ class ColorCAL:
             x, y, z are the CIE coordinates
 
         """
-        time.sleep(0.1)
-        val = self.sendMessage('MES', timeout=0.5)
+        val = self.sendMessage('MES', timeout=0.5)#use a longish timeout for measurement
         vals=val.split(',')#separate into words
         ok = (vals[0]=='OK00')
-        x, y, z = float(vals[1]), float(vals[2]), float(vals[3])
+        #transform raw x,y,z by calibration matrix
+        xyzRaw = numpy.array([vals[1],vals[2],vals[3]], dtype=float)
+        x,y,z = numpy.dot(self.calibMatrix, xyzRaw)
         return ok, x, y, z
 
     def getInfo(self):
@@ -167,15 +168,23 @@ class ColorCAL:
     def calibrateZero(self):
         """This should be done once before any measurements are taken when
         """
-        val = self.sendMessage("UZC")
+        val = self.sendMessage("UZC", timeout=1.0)
+        print 'got', val
         if val=='OK00':
             return True
         elif val=='ER11':
             log.error("Could not calibrate ColorCAL2. Is it properly covered?")
         return 0#if we got here there was a problem, either reading or an ER11
-    def getMatrix(self):
+    def getCalibMatrix(self):
+        """Get the calibration matrix from the device, needed for transforming
+        measurements into real-world values.
 
+        This is normally retrieved during __init__ and stored as
+            ColorCal.calibMatrix
+        so most users don't need to call this function
+        """
         matrix=numpy.zeros((3,3),dtype=float)
+        #alternatively use 'r99' which gets all rows at once, but then more parsing?
         for rowN in range(3):
             rowName='r0%i' %(rowN+1)
             val = self.sendMessage(rowName, timeout=1.0)

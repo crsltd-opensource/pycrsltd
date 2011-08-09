@@ -68,10 +68,7 @@ class ColorCAL:
         #setup the params for serial port
         if self.OK:
             self.com.close()#not sure why this helps but on win32 it does!!
-#            self.com.setByteSize(7)#this is a slightly odd characteristic of the Minolta LS100
-#            self.com.setBaudrate(4800)
-#            self.com.setParity(serial.PARITY_EVEN)#none
-#            self.com.setStopbits(serial.STOPBITS_TWO)
+            self.com.setBaudrate(115200)#actually, any baudrate seems fine
             try:
                 self.com.open()
                 self.isOpen=1
@@ -128,11 +125,15 @@ class ColorCAL:
 
         Usage::
 
-            ok, x, y, z = colorCal.measure()
+            ok, X, Y, Z = colorCal.measure()
 
         Where:
             ok is True/False
-            x, y, z are the CIE coordinates
+            X, Y, Z are the CIE coordinates (Y is luminance in cd/m**2)
+
+        Following a call to measure, the values ColorCAL.lastLum will also be
+        populated with, for compatibility with other devices used by PsychoPy
+        (notably the PR650/PR655)
 
         """
         val = self.sendMessage('MES', timeout=0.5)#use a longish timeout for measurement
@@ -140,8 +141,9 @@ class ColorCAL:
         ok = (vals[0]=='OK00')
         #transform raw x,y,z by calibration matrix
         xyzRaw = numpy.array([vals[1],vals[2],vals[3]], dtype=float)
-        x,y,z = numpy.dot(self.calibMatrix, xyzRaw)
-        return ok, x, y, z
+        X,Y,Z = numpy.dot(self.calibMatrix, xyzRaw)
+        self.ok, self.lastLum = ok, Y
+        return ok, X,Y,Z
 
     def getInfo(self):
         """Queries the device for information
@@ -169,12 +171,21 @@ class ColorCAL:
         """This should be done once before any measurements are taken when
         """
         val = self.sendMessage("UZC", timeout=1.0)
-        print 'got', val
         if val=='OK00':
-            return True
+            pass
         elif val=='ER11':
             log.error("Could not calibrate ColorCAL2. Is it properly covered?")
-        return 0#if we got here there was a problem, either reading or an ER11
+            return False
+        else:#unlikely
+            log.warning("Received surprising result from ColorCAL2: %s" %val)
+            return False
+        #then take a measurement to see if we are close to zero lum (ie is it covered?)
+        self.ok, x,y,z = self.measure()
+        if y>3:
+            log.error('There seems to be some light getting to the detector. It should be well-covered for zero calibration')
+            return False
+        return True
+
     def getCalibMatrix(self):
         """Get the calibration matrix from the device, needed for transforming
         measurements into real-world values.

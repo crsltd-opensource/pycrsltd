@@ -35,6 +35,8 @@ try: from psychopy import log
 except:
     import logging as log
 
+eol = "\n\r"#unusual for a serial port?!
+
 class ColorCAL:
     """A class to handle the CRS Ltd ColorCAL device
     """
@@ -51,8 +53,8 @@ class ColorCAL:
             self.portString = port
             self.portNumber=None
         self.isOpen=0
-        self.lastQual=0
         self.lastLum=None
+        self.lastCmd=''
         self.type='ColorCAL'
         self.com=False
         self.OK=True#until we fail
@@ -79,38 +81,47 @@ class ColorCAL:
         ok, ser, firm, firmBuild = self.getInfo()
         self.OK = ok
 
-    def sendMessage(self, message, timeout=1.0):
+    def sendMessage(self, message, timeout=0.1):
         """Send a command to the photometer and wait an alloted
         timeout for a response.
         """
-        if message[-2:]!='\n':
-            message+='\n'     #append a newline if necess
 
         #flush the read buffer first
-        prevMsg = self.com.read(self.com.inWaiting())#read as many chars as are in the buffer
-        if len(prevMsg) and prevMsg not in ['>\n', '\r>']:
+        prevOut = self.com.read(self.com.inWaiting())#read as many chars as are in the buffer
+        if len(prevOut) and prevOut not in ['>'+eol, eol]:
             #do not use log messages here
-            print 'prevMsg found:', prevMsg
+            print 'Resp found to prev cmd (%s):%s' %(self.lastCmd, prevOut)
+        self.lastCmd=message
 
-        retVal=''
-        attemptN=0
-        while len(retVal)==0 and attemptN<self.maxAttempts:
-            #send the message
-            self.com.write(message)
-            self.com.flush()
-            #get reply (within timeout limit)
-            self.com.setTimeout(timeout)
-            log.debug('Sent command:%s (attempt %i)' %(message[:-1],attemptN))#send complete message
-            if message in ['?\n', 'r00', 'r01','r02']:
-                retVal=[]
-                time.sleep(0.5)#give it a chance for the command to execute
-                while self.com.inWaiting():
-                    retVal.append(self.com.readline())
+        if message[-2:] not in ['\n', '\n\r']:
+            message+='\n'     #append a newline if necess
+        #send the message
+        self.com.write(message)
+        self.com.flush()
+        #get reply (within timeout limit)
+        self.com.setTimeout(timeout)
+        log.debug('Sent command:%s' %(message[:-1]))#send complete message
+
+        #get output lines using self.readlin, not self.com.readline
+        #colorcal signals the end of a message by giving a command prompt
+        lines=[]
+        thisLine=''
+        nEmpty=0
+        while (thisLine != '>') and (nEmpty<=self.maxAttempts):
+            #self.com.readline can't handle custom eol
+            thisLine=self.readline(eol=eol)
+            if thisLine in [eol, '>', '']:#lines we don't care about
+                nEmpty+=1
+                continue
             else:
-                retVal= self.com.readline()
-                while retVal.startswith('\r'): retVal=retVal[1:]
-                while retVal.endswith('\n'): retVal=retVal[:-1]
-        return retVal
+                lines.append(thisLine.rstrip(eol))#line without any eol chars
+                nEmpty=0
+
+        #got all lines and reached '>'
+        if len(lines)==1:
+            return lines[0]#return the string
+        else:
+            return lines#a list of lines
 
     def measure(self):
         """Conduct a measurement and return the X,Y,Z values
@@ -125,13 +136,10 @@ class ColorCAL:
 
         """
         time.sleep(0.1)
-        ret = self.sendMessage('MES')
-        if len(ret)==1: #we only got ['OK00']
-            #the device reported OK but gave no vals. Try again.
-            ret = self.sendMessage('MES')
-        ret=ret.split(',')#separate into words
-        ok = (ret[0]=='OK00')
-        x, y, z = float(ret[1]), float(ret[2]), float(ret[3])
+        val = self.sendMessage('MES', timeout=0.5)
+        vals=val.split(',')#separate into words
+        ok = (vals[0]=='OK00')
+        x, y, z = float(vals[1]), float(vals[2]), float(vals[3])
         return ok, x, y, z
 
     def getInfo(self):
@@ -144,12 +152,12 @@ class ColorCAL:
         Other values will be a string or None.
 
         """
-        retVal = self.sendMessage('IDR').split(',')
-        ok = (retVal[0]=='OK00')
+        val = self.sendMessage('IDR').split(',')
+        ok = (val[0]=='OK00')
         if ok:
-            firmware=retVal[2]
-            serialNum=retVal[4]
-            firmBuild=retVal[-1]
+            firmware=val[2]
+            serialNum=val[4]
+            firmBuild=val[-1]
         else:
             firmware=0
             serialNum=0
@@ -169,20 +177,41 @@ class ColorCAL:
 
         matrix=numpy.zeros((3,3),dtype=float)
         for rowN in range(3):
-            val = self.sendMessage('r0%i' %rowN, timeout=1.0)
+            rowName='r0%i' %(rowN+1)
+            val = self.sendMessage(rowName, timeout=1.0)
             vals=val.split(',')#convert to list of values
-
             if vals[0]=='OK00' and len(vals)>1:
                 #convert to numpy array
                 rawVals=numpy.array(vals[1:], dtype=int)
-                matrix[rowN,:] = _minolta2float(rawVals)
-                print 'row %i: %s %s' %(rowN,rawVals,matrix[rowN,:])
+                floats = _minolta2float(rawVals)
+                matrix[rowN,:]=floats
             else:
-                print 'got this from command r0%i: %s' %(rowN, repr(val))
+                print 'ColorCAL got this from command %s: %s' %(rowName, repr(val))
         return matrix
     def _error(self, msg):
         self.OK=False
         log.error(msg)
+
+    def readline(self, size=None, eol='\n\r'):
+        """This should be used in place of the standard serial.Serial.readline()
+        because that doesn't allow us to set the eol character"""
+        #The code here is adapted from
+        #    pyserial 2.5: serialutil.FileLike.readline
+        #which is released under the python license.
+        #Copyright (C) 2001-2010 Chris Liechti
+        leneol = len(eol)
+        line = bytearray()
+        while True:
+            c = self.com.read(1)#NB timeout is applied here, so to each char read
+            if c:
+                line += c
+                if line[-leneol:] == eol:
+                    break
+                if size is not None and len(line) >= size:
+                    break
+            else:
+                break
+        return bytes(line)
 
 def _minolta2float(inVal):
     """Takes a number, or numeric array (any shape) and returns the appropriate

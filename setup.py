@@ -16,10 +16,10 @@ That uses the manifest.in file for data files rather than searching for them her
 from setuptools import setup, Extension, find_packages
 import sys
 sys.path.append('src')#so we can import openpyxl
-import openpyxl#to fetch __version__ etc
+import pycrsltd#to fetch __version__ etc
 
 setup(name = "pycrsltd",
-    packages = find_packages('pycrsltd'),
+    packages = ["pycrsltd"],
     include_package_data = True,
     package_data = {}, #DOESN'T AFFECT zip DISTRIBUTION. MUST MODIFY MANIFEST.in TOO
     #metadata

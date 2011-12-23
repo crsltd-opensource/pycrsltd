@@ -1,7 +1,8 @@
 
 from pycrsltd import colorcal
 import numpy
-
+import sys
+    
 try:
     from psychopy import log
     log.console.setLevel(log.DEBUG)
@@ -13,8 +14,8 @@ def testMinolta2Float():
     assert colorcal._minolta2float(10630)==  1.0630
     assert numpy.alltrue(colorcal._minolta2float([10635, 50631]) == numpy.array([ 1.0635, -0.0631]))
     
-def testColorCAL():
-    cal = colorcal.ColorCAL('/dev/cu.usbmodem0001', maxAttempts=5)
+def testColorCAL(port):
+    cal = colorcal.ColorCAL()#using default ports (COM3, /dev/cu.usbmodem0001 or /dev/ttyACM0)
     assert cal.OK#connected and received 'OK00' to cal.getInfo()
     
     print 'Got ColorCAL serial#:%s firmware:%s_%s' %(cal.serialNum, cal.firm, cal.firmBuild)
@@ -38,6 +39,6 @@ def testColorCAL():
     log.flush()
     
 if __name__ == "__main__":
-    testColorCAL()
+    testColorCAL(port=defaultPort)
     testMinolta2Float()
     print 'done'

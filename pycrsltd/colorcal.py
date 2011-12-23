@@ -26,6 +26,7 @@
 
 __docformat__ = "restructuredtext en"
 
+import sys
 try: import serial
 except: serial=False
 import numpy
@@ -43,18 +44,39 @@ eol = "\n\r"#unusual for a serial port?!
 class ColorCAL:
     """A class to handle the CRS Ltd ColorCAL device
     """
-    def __init__(self, port, maxAttempts=1):
+    def __init__(self, port=None, maxAttempts=1):
+        """Open serial port connection with Colorcal II device
+
+        :Usage:
+            
+            cc = ColorCAL(port, maxAttempts)
+       
+       If no port is provided then the following defaults will be tried:           
+           - /dev/cu.usbmodem0001 (OSX)
+           - /dev/ttyACM0
+           - COM3 (windows)
+           
+        """
 
         if not serial:
             raise ImportError('The module serial is needed to connect to photometers. ' +\
                 "On most systems this can be installed with\n\t easy_install pyserial")
 
+        #try to deduce port
+        if port is None:
+            if sys.platform=='darwin':
+                port = '/dev/cu.usbmodem0001'
+            elif sys.platform.startswith('linux'):
+                port = '/dev/ttyACM0'
+            elif sys.platfor.startswith('win'):
+                port = 3
         if type(port) in [int, float]:
             self.portNumber = port #add one so that port 1=COM1
             self.portString = 'COM%i' %self.portNumber#add one so that port 1=COM1
         else:
             self.portString = port
             self.portNumber=None
+            
         self.isOpen=0
         self.lastLum=None
         self.lastCmd=''

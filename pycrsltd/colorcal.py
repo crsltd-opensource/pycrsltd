@@ -44,7 +44,7 @@ eol = "\n\r"#unusual for a serial port?!
 class ColorCAL:
     """A class to handle the CRS Ltd ColorCAL device
     """
-    def __init__(self, port=None, maxAttempts=1):
+    def __init__(self, port=None, maxAttempts=2):
         """Open serial port connection with Colorcal II device
 
         :Usage:
@@ -84,6 +84,7 @@ class ColorCAL:
         self.com=False
         self.OK=True#until we fail
         self.maxAttempts=maxAttempts
+        self._zeroCalibrated=False
 
         #try to open the port
         try:self.com = serial.Serial(self.portString)
@@ -161,7 +162,8 @@ class ColorCAL:
         (notably the PR650/PR655)
 
         """
-        val = self.sendMessage('MES', timeout=0.5)#use a longish timeout for measurement
+        val = self.sendMessage('MES', timeout=5)#use a long timeout for measurement
+        
         vals=val.split(',')#separate into words
         ok = (vals[0]=='OK00')
         #transform raw x,y,z by calibration matrix
@@ -169,7 +171,14 @@ class ColorCAL:
         X,Y,Z = numpy.dot(self.calibMatrix, xyzRaw)
         self.ok, self.lastLum = ok, Y
         return ok, X,Y,Z
-
+    def getLum(self):
+        """Conducts a measurement and returns the measured luminance
+        
+        .. note::
+            The luminance is always also stored as .lastLum
+        """
+        self.measure()
+        return self.lastLum
     def getInfo(self):
         """Queries the device for information
 
@@ -191,9 +200,33 @@ class ColorCAL:
             serialNum=0
             firmBuild=0
         return ok, serialNum, firmware, firmBuild
-
+    def getNeedsCalibrateZero(self):
+        """Check whether the device needs a dark calibration
+        
+        In initial versions of CRS ColorCAL mkII the device stored
+        its zero calibration in volatile memory and needed to be
+        calibrated in darkness each time you connected it to the USB
+        
+        This function will check whether your device requires that (based
+        on firmware build number and whether you've already done it
+        since python connected to the device).
+        
+        :returns: True or False
+        """
+        if self.firmBuild<'877' and not self._zeroCalibrated:
+            return True 
+        else:
+            return False
     def calibrateZero(self):
-        """This should be done once before any measurements are taken when
+        """Perform a calibration to zero light.
+        
+        For early versions of the ColorCAL this had to be called after connecting
+        to the device. For later versions the dark calibration was performed at
+        the factory and stored in non-volatile memory.
+        
+        You can check if you need to run a calibration with::
+            
+            ColorCAL.getNeedsCalibrateZero()
         """
         val = self.sendMessage("UZC", timeout=1.0)
         if val=='OK00':
@@ -209,6 +242,7 @@ class ColorCAL:
         if y>3:
             logging.error('There seems to be some light getting to the detector. It should be well-covered for zero calibration')
             return False
+        self._zeroCalibrated=True
         return True
 
     def getCalibMatrix(self):
@@ -257,7 +291,7 @@ class ColorCAL:
             else:
                 break
         return bytes(line)
-
+        
 def _minolta2float(inVal):
     """Takes a number, or numeric array (any shape) and returns the appropriate
     float.

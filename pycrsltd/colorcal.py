@@ -26,15 +26,18 @@
 
 __docformat__ = "restructuredtext en"
 
-import time
 try: import serial
 except: serial=False
 import numpy
 
-try: from psychopy import log
-except:
-    import logging as log
-
+#try to use psychopy logging but revert to system logging
+try:from psychopy import logging#from 1.73 onwards
+except ImportError:logging=None
+if logging is None:
+    try: from psychopy import log as logging#up to v1.73
+    except ImportError: logging=None
+if logging is None:
+    import logging #use the standard python logging
 eol = "\n\r"#unusual for a serial port?!
 
 class ColorCAL:
@@ -97,7 +100,7 @@ class ColorCAL:
         self.com.flush()
         #get reply (within timeout limit)
         self.com.setTimeout(timeout)
-        log.debug('Sent command:%s' %(message[:-1]))#send complete message
+        logging.debug('Sent command:%s' %(message[:-1]))#send complete message
 
         #get output lines using self.readlin, not self.com.readline
         #colorcal signals the end of a message by giving a command prompt
@@ -174,15 +177,15 @@ class ColorCAL:
         if val=='OK00':
             pass
         elif val=='ER11':
-            log.error("Could not calibrate ColorCAL2. Is it properly covered?")
+            logging.error("Could not calibrate ColorCAL2. Is it properly covered?")
             return False
         else:#unlikely
-            log.warning("Received surprising result from ColorCAL2: %s" %val)
+            logging.warning("Received surprising result from ColorCAL2: %s" %val)
             return False
         #then take a measurement to see if we are close to zero lum (ie is it covered?)
         self.ok, x,y,z = self.measure()
         if y>3:
-            log.error('There seems to be some light getting to the detector. It should be well-covered for zero calibration')
+            logging.error('There seems to be some light getting to the detector. It should be well-covered for zero calibration')
             return False
         return True
 
@@ -210,7 +213,7 @@ class ColorCAL:
         return matrix
     def _error(self, msg):
         self.OK=False
-        log.error(msg)
+        logging.error(msg)
 
     def readline(self, size=None, eol='\n\r'):
         """This should be used in place of the standard serial.Serial.readline()

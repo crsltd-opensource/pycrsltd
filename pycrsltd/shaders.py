@@ -5,13 +5,13 @@
 # ==========================
 # This file contains code derived from shader programs contained in Psychtoolbox
 # version 3.0.9 (http://psychtoolbox.org/) and shader compilation code in
-# PsychoPy 1.65.02 (http://psychopy.org/). Although these projects are both 
-# released under GPL licenses (versions 2 and 3 respectively) the authors 
-# (Mario Kleiner and Jonathan Peirce) have given permission for these parts of 
+# PsychoPy 1.65.02 (http://psychopy.org/). Although these projects are both
+# released under GPL licenses (versions 2 and 3 respectively) the authors
+# (Mario Kleiner and Jonathan Peirce) have given permission for these parts of
 # their code to be reused here under the more permissive license
 # used by the pycrsltd library
-
-
+#
+#
 # Copyright (c) 2011 Jon Peirce <jon@peirce.org.uk>, Cambridge Research Systesm (CRS) Ltd
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,10 +33,10 @@
 # THE SOFTWARE.
 
 from ctypes import *
-import pyglet.gl as GL
+from pyglet import gl
 
-FRAG = GL.GL_FRAGMENT_SHADER_ARB
-VERT = GL.GL_VERTEX_SHADER_ARB
+FRAG = gl.GL_FRAGMENT_SHADER_ARB
+VERT = gl.GL_VERTEX_SHADER_ARB
 shaderTypes=[FRAG, VERT]
 
 class ShaderCode:
@@ -46,76 +46,76 @@ class ShaderCode:
             print "warning: shaderType was not a known type"
         else:
             self.type=shaderType
-        
+
 def compileProgram(vertex=None, fragment=None, attachments=[]):
     """Create and compile a vertex and fragment shader pair from their sources (strings)
-    
+
     Usage::
-    
+
         prog = compileProgram(vertex, fragment, attachments=[])
-        
+
     where:
-    
+
         - vertex is the main vertex shader source (or ShaderCode object)
         - fragment is the main fragment shader source (or ShaderCode object)
         - attachments is a list of ShaderCode objects, with valid shaderType set
-        
+
     """
-    
-    #Derived from shader compilation code in PsychoPy 1.65.02, with permission 
-    # from JWP to reuse under more permissive license 
-    
+
+    #Derived from shader compilation code in PsychoPy 1.65.02, with permission
+    # from JWP to reuse under more permissive license
+
     def compileShader( source, shaderType ):
             """Compile shader source of given type (only needed by compileProgram)"""
-            shader = GL.glCreateShaderObjectARB(shaderType)
-            
+            shader = gl.glCreateShaderObjectARB(shaderType)
+
             #were we given a source string or a ShaderCode object?
             if hasattr(source, 'src'): source = source.src
-            
+
             prog = c_char_p(source)
             length = c_int(-1)
-            GL.glShaderSourceARB(shader,
+            gl.glShaderSourceARB(shader,
                               1,
                               cast(byref(prog), POINTER(POINTER(c_char))),
                               byref(length))
-            GL.glCompileShaderARB(shader)
+            gl.glCompileShaderARB(shader)
 
             #check for errors
             status = c_int()
-            GL.glGetShaderiv(shader, GL.GL_COMPILE_STATUS, byref(status))
+            gl.glGetShaderiv(shader, gl.GL_COMPILE_STATUS, byref(status))
             if not status.value:
                 #	retrieve the log length
-                GL.glGetShaderiv(shader, GL.GL_INFO_LOG_LENGTH, byref(status))
+                gl.glGetShaderiv(shader, gl.GL_INFO_LOG_LENGTH, byref(status))
                 # create a buffer for the log
                 buffer = create_string_buffer(status.value)#from ctypes
                 # retrieve the log text
-                GL.glGetProgramInfoLog(shader, status, None, buffer)
+                gl.glGetProgramInfoLog(shader, status, None, buffer)
                 # print the log to the console
                 print buffer.value
-                GL.glDeleteShader(shader)
+                gl.glDeleteShader(shader)
                 raise ValueError, 'Shader compilation failed'
             return shader
-    
-    program = GL.glCreateProgramObjectARB()
-    
+
+    program = gl.glCreateProgramObjectARB()
+
     #compile attachments before main vertex and frag progs
     for thisAttachment in attachments:
         attachment = compileShader(thisAttachment, thisAttachment.type)
-        GL.glAttachObjectARB(program, attachment)
+        gl.glAttachObjectARB(program, attachment)
     if vertex:
             vertexShader = compileShader(vertex, VERT)
-            GL.glAttachObjectARB(program, vertexShader)
+            gl.glAttachObjectARB(program, vertexShader)
     if fragment:
             fragmentShader = compileShader(fragment, FRAG)
-            GL.glAttachObjectARB(program, fragmentShader)
+            gl.glAttachObjectARB(program, fragmentShader)
     #compile the overall program
-    GL.glValidateProgramARB( program )
-    GL.glLinkProgramARB(program)
+    gl.glValidateProgramARB( program )
+    gl.glLinkProgramARB(program)
     #cleanup
     if vertex:
-            GL.glDeleteObjectARB(vertexShader)
+            gl.glDeleteObjectARB(vertexShader)
     if fragment:
-            GL.glDeleteObjectARB(fragmentShader)
+            gl.glDeleteObjectARB(fragmentShader)
     return program
 
 gammaCorrectionFrag= ShaderCode(src="""
@@ -366,7 +366,7 @@ void main()
 
     /* Apply some color transformation (clamping, gamma correction etc.): */
     incolor = gammaCorrect3(incolor);
-    
+
     /* Remap all color channels from 0.0 - 1.0 to 0 to 65535: */
     /* Perform rounding for non-integral numbers and add a small epsilon to take numeric roundoff into account: */
     vec3 index = floor(incolor.rgb * 65535.0 + 0.5) + 0.01;

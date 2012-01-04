@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #coding=utf-8
 
-# Copyright (c) Cambridge Research Systems (CRS) Ltd 
+# Copyright (c) Cambridge Research Systems (CRS) Ltd
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 
 __version__    =       '0.1'
 __author__     =       'Jon Peirce'
-__author_email__=      'jon at peirce.org.uk'
+__author_email__=      'jon@peirce.org.uk'
 __url__        =       'https://github.com/crsltd-opensource/pycrsltd'
 __license__    =       'MIT'
-__downloadUrl__=       'https://github.com/crsltd-opensource/pycrsltd'
+__downloadUrl__=       'https://github.com/crsltd-opensource/pycrsltd/downloads'

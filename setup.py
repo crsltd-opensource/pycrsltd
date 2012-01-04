@@ -13,9 +13,10 @@ A source distribution (.zip) can be built with
 That uses the manifest.in file for data files rather than searching for them here
 """
 
-from setuptools import setup, Extension, find_packages
-import sys
-sys.path.append('src')#so we can import openpyxl
+try:
+    from setuptools import setup, Extension, find_packages
+except:#if the user doesn't have setuptools we could install with standard library
+    from distutils.core import setup
 import pycrsltd#to fetch __version__ etc
 
 setup(name = "pycrsltd",
@@ -25,17 +26,28 @@ setup(name = "pycrsltd",
     #metadata
     version = pycrsltd.__version__,
     description = "A Python library to interface with CRS Ltd hardware",
-    long_description = "A Python library to interface with CRS Ltd hardware",
+    long_description = open('README.txt').read(),
     author = pycrsltd.__author__,
     author_email = pycrsltd.__author_email__,
     url = pycrsltd.__url__,
     license = pycrsltd.__license__,
     download_url = pycrsltd.__downloadUrl__,
     test_suite = 'nose.collector',
-    classifiers = ['Development Status :: 4 - Beta',
-          'Operating System :: MacOS :: MacOS X',
-          'Operating System :: Microsoft :: Windows',
-          'Operating System :: POSIX',
-          'License :: OSI Approved :: MIT License',
-          'Programming Language :: Python'],
-    )
+    classifiers = ['Development Status :: 3 - Alpha',
+                   'Operating System :: MacOS :: MacOS X',
+                   'Operating System :: Microsoft :: Windows',
+                   'Operating System :: POSIX',
+                   'License :: OSI Approved :: MIT License',
+                   'Programming Language :: Python'],
+)
+
+"""
+to build:
+    sudo python setup.py sdist --format=zip
+    sudo python setup.py bdist_egg
+
+to register with PYPI:
+    sudo python setup.py register
+    python setup.py egg_info
+    python setup.py sdist upload
+"""

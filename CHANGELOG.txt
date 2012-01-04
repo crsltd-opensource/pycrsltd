@@ -1,0 +1,12 @@
+Changelog for the pycrsltd open-source library
+==================================================
+
+0.1
+---------
+
+(released Jan 2012)
+The first released version of the library.
+At this point the library supports the following devices:
+    - bits++ (bits++ mode only at present)
+    - ColorCAL mkII (fairly complete support)
+    - OptiCAL (untested by JWP, but apparently working in other labs)

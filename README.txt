@@ -6,3 +6,7 @@ enthusiasts.
 
 It is being written mostly by Jon Peirce, with support from CRS Ltd. If you would
 like to contribute please get in touch!
+
+Assuming you have python and setuptools installed already, you can install the package with the command:
+
+    easy_install pycrsltd

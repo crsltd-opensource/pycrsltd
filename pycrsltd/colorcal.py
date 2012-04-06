@@ -44,6 +44,11 @@ eol = "\n\r"#unusual for a serial port?!
 class ColorCAL:
     """A class to handle the CRS Ltd ColorCAL device
     """
+    
+    # PsychoPy uses these two variables for matching classes to photometers
+    longName = "CRS ColorCAL"
+    driverFor = ["colorcal"]
+    
     def __init__(self, port=None, maxAttempts=2):
         """Open serial port connection with Colorcal II device
 

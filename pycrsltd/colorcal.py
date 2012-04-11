@@ -44,6 +44,11 @@ eol = "\n\r"#unusual for a serial port?!
 class ColorCAL:
     """A class to handle the CRS Ltd ColorCAL device
     """
+    
+    # PsychoPy uses these two variables for matching classes to photometers
+    longName = "CRS ColorCAL"
+    driverFor = ["colorcal"]
+    
     def __init__(self, port=None, maxAttempts=2):
         """Open serial port connection with Colorcal II device
 
@@ -96,10 +101,13 @@ class ColorCAL:
             self.com.close()#not sure why this helps but on win32 it does!!
             self.com.setBaudrate(115200)#actually, any baudrate seems fine
             try:
-                self.com.open()
-                self.isOpen=1
+                if not self.com.isOpen():
+                    self.com.open()
             except:
                 self._error("Opened serial port %s, but couldn't connect to ColorCAL" %self.portString)
+            else:
+                self.isOpen=1
+
         #check that we can communicate with it
         self.ok, self.serialNum, self.firm, self.firmBuild = self.getInfo()
         self.calibMatrix=self.getCalibMatrix()

@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 #coding=utf-8
 
-# Copyright (c) 2009,2010 Valentin Haenel <valentin.haenel@gmx.de>
-# Copyright (c) 2011 Jon Peirce <jon@peirce.org.uk> Cambridge Research Systesm (CRS) Ltd
+# Copyright (c) 2009-2012 Valentin Haenel <valentin.haenel@gmx.de>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,15 +26,17 @@
     Overview
     ========
 
-    The 'OptiCAL' is a photometer that is produced by Cambridge Research Systems
-    (CRS). This device is a standard tool for gamma-calibration of display devices
-    in vision research. This package provides a free-software replacement for the
-    Windows-software distributed by the manufacturer that allows querying an OptiCAL
-    via a serial connection. `pyoptical` can be used as a library in third-party
-    applications or as a standalone command line tool.
+    The 'OptiCAL' is a photometer that is produced by Cambridge Research
+    Systems (CRS). This device is a standard tool for gamma-calibration of
+    display devices in vision research. This package provides a free-software
+    replacement for the Windows-software distributed by the manufacturer that
+    allows querying an OptiCAL via a serial connection. `pyoptical` can be used
+    as a library in third-party applications or as a standalone command line
+    tool.
 
     This module provides the `OptiCAL` class and some supporting code. The
-    command line wrapper for this module can be found in the 'pyoptical' script.
+    command line wrapper for this module can be found in the 'pyoptical'
+    script.
 
     Examples
     --------
@@ -167,11 +168,12 @@
     be put into 'current' mode at startup.
 
 """
-__version__ = "0.4-dev"
+__version__ = "0.4"
 __author__ = "Valentin Haenel <valentin.haenel@gmx.de>"
 __docformat__ = "restructuredtext en"
 
 import serial
+
 
 class OptiCAL(object):
     """ Object to access the OptiCAL """
@@ -199,14 +201,14 @@ class OptiCAL(object):
 
     def __str__(self):
         return "Optical found at : " + self._phot.port + "\n" + \
-               "Product Type :     " + str(self._product_type) + "\n" \
-               "Optical S/N  :     " + str(self._optical_serial_number) + "\n" \
+               "Product Type :     " + str(self._product_type) + "\n" + \
+               "Optical S/N  :     " + str(self._optical_serial_number) + "\n"\
                "Firmware version : " + str(self._firmware_version) + "\n" \
                "V_ref:             " + str(self._V_ref) + "\n" + \
                "Z_count:           " + str(self._Z_count) + "\n" + \
                "R_feed:            " + str(self._R_feed) + "\n" + \
                "R_gain:            " + str(self._R_gain) + "\n" + \
-               "Probe S/N          " + str(self._probe_serial_number) + "\n" + \
+               "Probe S/N          " + str(self._probe_serial_number) + "\n" +\
                "K_cal:             " + str(self._K_cal) + "\n"
 
     def _send_command(self, command, description):
@@ -249,7 +251,7 @@ class OptiCAL(object):
                 (string) - a byte in the range 0<i<256
 
         """
-        self._phot.write(chr(128+address))
+        self._phot.write(chr(128 + address))
         ret = self._phot.read(2)
         _check_return(ret, "reading eeprom at address %d" % address)
         # if _check_return does not raise an exception
@@ -267,7 +269,8 @@ class OptiCAL(object):
             :Returns:
                 (string of bytes) - each character in the range 0<i<255
         """
-        return "".join([self._read_eeprom_single(i) for i in range(start, stop+1)])
+        return "".join([self._read_eeprom_single(i)
+            for i in range(start, stop + 1)])
 
     def _read_product_type(self):
         return _to_int(self._read_eeprom(0, 1))
@@ -276,7 +279,7 @@ class OptiCAL(object):
         return _to_int(self._read_eeprom(2, 5))
 
     def _read_firmware_version(self):
-        return float(_to_int(self._read_eeprom(6, 7)))/100
+        return float(_to_int(self._read_eeprom(6, 7))) / 100
 
     def _read_probe_serial_number(self):
         return int(self._read_eeprom(80, 95))
@@ -330,31 +333,36 @@ class OptiCAL(object):
     def read_luminance(self):
         """ the luminance in cd/m**2 """
         ADC_adjust = self._read_adc()
-        numerator =  (float(ADC_adjust)/524288) * self._V_ref * 1.e-6
+        numerator = (float(ADC_adjust) / 524288) * self._V_ref * 1.e-6
         denominator = self._R_feed * self._K_cal * 1.e-15
         return max(0.0, numerator / denominator)
+
 
 def _to_int(byte_string):
     """ convert a string of bytes(in least significant byte order) to int """
     return int(byte_string[::-1].encode('hex'), 16)
 
+
 def _check_return(ret, description):
     """ check the return value of a read, raise exception if its not OK """
     if ret == "":
         raise TimeoutException(description)
-    if OptiCAL._NACK in ret:
+    # check the last byte only
+    elif ret[-1] == OptiCAL._NACK:
         raise NACKException(description)
+
 
 class OptiCALException(Exception):
     """ base exception for all OptiCAL exceptions """
 
+
 class NACKException(OptiCALException):
-    """ is raised when the OptiCAL sends a NACK byte to signify an error"""
+    """ raised when the OptiCAL sends a NACK byte to signify an error"""
     def __str__(self):
         return "OptiCAL sent a NACK while trying to: %s" % self.message
 
+
 class TimeoutException(OptiCALException):
-    """ is raised when the OptiCAL does not respond within the timeout limit """
+    """ raised when the OptiCAL does not respond within the timeout limit """
     def __str__(self):
         return "OptiCAL timeout while trying to: %s" % self.message
-

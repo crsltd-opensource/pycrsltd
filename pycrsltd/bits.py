@@ -25,15 +25,19 @@
 #    This code written by Jon Peirce <jon@peirce.org.uk>. The BitsPlusPlus code was
 #    originally as part of the PsychoPy library (http://www.psychopy.org).
 
-"""Interface to the bits++ (http://www.crsltd.com/) for hi-res luminance/contrast control
-"""
+__docformat__ = "restructuredtext en"
 
 DEBUG=True
 
+import sys, time
 import numpy
 import shaders
 from copy import copy
-import logging
+try:
+    from psychopy import logging
+except:
+    import logging
+import serial
 from OpenGL import GL
 try:
     from psychopy.ext import _bits
@@ -51,13 +55,89 @@ else:
     except:
         haveShaders=False
 
+#bits++ modes
 bits8BITPALETTEMODE=  0x00000001  #/* normal vsg mode */
 NOGAMMACORRECT     =  0x00004000  #/* Gamma correction mode */
 GAMMACORRECT       =  0x00008000  #/* Gamma correction mode */
 VIDEOENCODEDCOMMS  =  0x00080000 # needs to be set so that LUT is read from screen
 
+class BitsSharp(object):
+    """A class to support functions of the Bits#
+    (for the Americans, Brits call the # symbol 'sharp')
 
-class BitsBox:
+    This class uses the CDC (serial port) connection to the bits box. To use it
+    you must have followed the instructions from CRS Ltd to get your box into
+    the CDC communication mode.
+
+    On windows you must specify the COM port name.
+    On OSX, if you don't specify a port then the first match of /dev/tty.usbmodemfa* will be used
+    ON linux, if you don't specify a port then /dev/ttyS0 will be used
+    """
+    def __init__(self, portName=None):
+        if portName==None:
+            if sys.platform == 'darwin':
+                portName = '/dev/tty.usbmodemfa1311'
+            elif sys.platform.startswith('linux'):
+                portName = '/dev/ttyS0'
+        self.portName = portName
+        self._com = self._connect()
+        if self._com:
+            self.OK=True
+        else:
+            self.OK=False
+            return
+    def _connect(self):
+        com = serial.Serial(self.portName)
+        com.setBaudrate(19200)
+        com.setParity('N')#none
+        com.setStopbits(1)
+        if not com.isOpen():
+            com.open()
+        return com
+    def __del__(self):
+        """If the user discards this object then close the serial port so it is released"""
+        self._com.close()
+    def getInfo(self):
+        """Returns a python dictionary of info about the box
+        """
+        info={}
+        #get product ('Bits_Sharp'?)
+        self.sendMessage('$ProductType\r')
+        time.sleep(0.1)
+        info['ProductType'] = self.read().replace('#ProductType;','').replace(';\n\r','')
+        #get serial number
+        self.sendMessage('$SerialNumber\r')
+        time.sleep(0.1)
+        info['SerialNumber'] = self.read().replace('#SerialNumber;','').replace('\x00\n\r','')
+        #get firmware date
+        self.sendMessage('$FirmwareDate\r')
+        time.sleep(0.1)
+        info['FirmwareDate'] = self.read().replace('#FirmwareDate;','').replace(';\n\r','')
+        return info
+    def startMassStorageMode(self):
+        self.sendMessage('$USB_massStorage\r')
+    def beep(self, freq=800, dur=0.25):
+        self.sendMessage('$Beep=[%i %.4f]\r' %(freq, dur))
+        time.sleep(0.1)
+    def sendMessage(self, msg):
+        """Sends a string message to the BitsSharp. If the user has not ended the
+        string with '\r' this will be added.
+        Will pause
+        """
+        if not msg.endswith('\r'):
+            msg += '\r'
+        self._com.write(msg)
+        logging.debug("Sent BitsSharp message: %s" %(repr(msg)))
+    def read(self, timeout=0.1):
+        """Get the current waiting characters from the serial port if there are any
+        """
+        self._com.setTimeout(timeout)
+        nChars = self._com.inWaiting()
+        raw = self._com.read(nChars)
+        logging.debug("Got BitsSharp reply: %s" %(repr(raw)))
+        return raw
+
+class BitsBox(object):
     """The main class to control a bits++ box.
 
     If you're using PsychoPy you can usually access Bits++ functions directly

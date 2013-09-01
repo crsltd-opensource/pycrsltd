@@ -2,7 +2,7 @@
 """
 
 from pycrsltd import bits
-import sys, os
+import sys, os, time
 from psychopy import logging
 logging.console.setLevel(logging.DEBUG)
 
@@ -13,11 +13,25 @@ def test_BitsSharp():
         portname='COM7'
     else:
         portname=None
-    box = bits.BitsSharp(portname)
-    assert box.OK == True
-    print box.getInfo()
-    #box.startMassStorageMode() #if you test this you have to repower the box
-    box.beep() #don't hear anything!?
+    bitsBox = bits.BitsSharp(portname)
+    assert bitsBox.OK == True
+    print bitsBox.getInfo()
     
+    ##status screen is slow
+    bitsBox.showStatusScreen()
+    time.sleep(2)#time to switch
+    ##get video line implicitly uses status screen
+    print bitsBox.getVideoLine(lineN=50, nPixels=5)
+    time.sleep(1)
+    #bitsBox.startMassStorageMode() #if you test this you have to repower the box after
+    
+    bitsBox.startColourPlusPlusMode()
+    time.sleep(5)
+    bitsBox.startMonoPlusPlusMode()
+    time.sleep(1)
+    bitsBox.startBitsPlusPlusMode()
+    time.sleep(1)
+    bitsBox.beep(freq=800, dur=1) #at one point dur was rounded down to 0 if les than 1
+
 if __name__ == '__main__':
     test_BitsSharp()

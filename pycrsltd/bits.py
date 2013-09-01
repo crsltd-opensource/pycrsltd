@@ -114,11 +114,66 @@ class BitsSharp(object):
         time.sleep(0.1)
         info['FirmwareDate'] = self.read().replace('#FirmwareDate;','').replace(';\n\r','')
         return info
+
+    #switch modes
     def startMassStorageMode(self):
+        """Set the Bits# into Mass Storage Mode so you can view/change the contents.
+        To get out of mass storage mode you need to restart the device
+        """
         self.sendMessage('$USB_massStorage\r')
-    def beep(self, freq=800, dur=0.25):
+    def startColourPlusPlusMode(self):
+        """Switch to Color++ mode
+        """
+        self.sendMessage('$colourPlusPlus\r')
+    def startMonoPlusPlusMode(self):
+        """Switch to Mono++ mode
+        """
+        self.sendMessage('$monoPlusPlus\r')
+    def startBitsPlusPlusMode(self):
+        """Switch to Bits++ mode
+        """
+        self.sendMessage('$BitsPlusPlus\r')
+    def startAutoPlusPlusMode(self):
+        """Switch to Auto++ mode (the box will determine the mode from a T-lock code
+        """
+        self.sendMessage('$autoPlusPlus\r')
+    def showStatusScreen(self):
+        """Show the status screen to check inputs etc.
+        To get out of this mode you need to switch to one of the standard video
+        modes.
+        """
+        self.sendMessage('$statusScreen\n\r')
+
+    #video-related settings
+    def beep(self, freq=800, dur=1):
+        """Make a beep with the internal
+        """
         self.sendMessage('$Beep=[%i %.4f]\r' %(freq, dur))
-        time.sleep(0.1)
+    def setTemporalDithering(self, dither=True):
+        """Set temporal dithering to be True or False
+        """
+        if dither:
+            self.sendMessage('$TemporalDithering=[ON]\r')
+        else:
+            self.sendMessage('$TemporalDithering=[OFF]\r')
+    def getVideoLine(self, lineN, nPixels):
+        """Return the r,g,b values for a number of pixels on a particular video line
+
+        :param lineN: the line number you want to read
+        :param nPixels: the number of pixels you want to read
+
+        :return: an Nx3 numpy array of uint8 values
+        """
+        self.sendMessage('$GetVideoLine=[%i %i]\r' %(lineN, nPixels))
+        time.sleep(0.5)
+        raw = self.read(timeout=0.5)
+        vals = raw.split(';')[1:-1]
+        if len(vals)==0:
+            logging.warning("No values returned by BitsSharp.getVideoLine(). Possibly not enough time to swith to status mode?")
+        vals = numpy.array(vals, dtype=int).reshape([-1,3])
+        return vals
+
+    #helper functions (lower level)
     def sendMessage(self, msg):
         """Sends a string message to the BitsSharp. If the user has not ended the
         string with '\r' this will be added.
@@ -136,6 +191,22 @@ class BitsSharp(object):
         raw = self._com.read(nChars)
         logging.debug("Got BitsSharp reply: %s" %(repr(raw)))
         return raw
+
+    #TO DO: The following are either not yet implemented (or not tested)
+    def setMonitorEDID(self, edidFilename):
+        """Set the EDID file for the monitor (using serial command `$setMonitorType`)
+        The edid files will be located in the EDID subdirectory of the flash disk.
+        The file “automatic.edid” will be the file read from the connected monitor
+        """
+        self.sendMessage('$setMonitorType=[%s]\r' %(EDIDfilename))
+    def setGammaCorrection(self, gammaFilename):
+        """Set the gamma correction file
+        """
+        self.sendMessage('$enableGammaCorrection=[%s]\r' %(gammaFilename))
+    def start(self):
+        pass
+    def stop(self):
+        pass
 
 class BitsBox(object):
     """The main class to control a bits++ box.

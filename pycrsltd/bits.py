@@ -29,7 +29,7 @@ __docformat__ = "restructuredtext en"
 
 DEBUG=True
 
-import sys, time
+import sys, time, glob
 import numpy
 import shaders
 from copy import copy
@@ -76,7 +76,7 @@ class BitsSharp(object):
     def __init__(self, portName=None):
         if portName==None:
             if sys.platform == 'darwin':
-                portName = '/dev/tty.usbmodemfa1311'
+                portName = glob.glob('/dev/tty.usbmodemfa*')[0]
             elif sys.platform.startswith('linux'):
                 portName = '/dev/ttyS0'
         self.portName = portName

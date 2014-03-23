@@ -4,7 +4,7 @@ from pycrsltd import bits
 
 def colorModePsychoPy():
     """ tTest using visual.Window([400,400], bitsMode='color++') """
-    win = visual.Window([400,400], screen=1, bitsMode='color++', useFBO=True)
+    win = visual.Window([400,400], screen=0, bitsMode='color++', useFBO=True)
     stim = visual.PatchStim(win, ori=45,mask='gauss')
     stim.draw()
     win.flip()
